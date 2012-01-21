@@ -1,0 +1,27 @@
+html {
+    font-family: 'Droid Sans Mono', sans-serif;
+    font-size: 12px;
+    background-color: rgb(47,47,47);
+}
+body {
+    color: rgb(225,225,225);
+}
+a, a:link, a:visited {
+    color: rgb(250,200,100);
+}
+a:active, a:hover {
+    text-decoration: none;
+}
+h1 {
+    margin: 0px;
+}
+#container {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+    width: 400px;
+    height: 100px;
+}
