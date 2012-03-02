@@ -16,12 +16,37 @@ h1 {
     margin: 0px;
 }
 #container {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
+//    position: absolute;
+//    top: 0;
+//    bottom: 0;
+//    left: 0;
+//    right: 0;
     margin: auto;
+    padding-top: 100px;
     width: 400px;
     height: 100px;
+}
+
+#projects {
+    padding-top: 10px;
+}
+#projects ul {
+    margin-top: 0px;
+    padding-left: 0px;
+    margin-bottom: 0px;
+}
+#projects li {
+    list-style-type: none;
+}
+
+#posts {
+    padding-top: 10px;
+}
+#posts ul {
+    margin-top: 0px;
+    padding-left: 0px;
+    margin-bottom: 0px;
+}
+#posts li {
+    list-style-type: none;
 }
