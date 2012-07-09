@@ -1,47 +1,61 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Daniel Connelly</title>
-    <link href='http://fonts.googleapis.com/css?family=Droid+Sans+Mono' rel='stylesheet' type='text/css'>
-    <link href="style.css" rel="stylesheet" type="text/css">
-  </head>
-  <body>
-    <div id="container">
-      <header>
-	<h1>Daniel Connelly</h1>
-	<summary>computer programmer and graduate student at Georgia Tech</summary>
-      </header>
-      <nav>
-	<a href="mailto:dhconnelly@gmail.com">email</a>
-	<a href="http://dhconnelly.blogspot.com">blog</a>
-	<a href="http://www.github.com/dhconnelly">github</a>
-	<a href="http://www.linkedin.com/in/dhconnelly">linkedin</a>
-	<a href="http://www.twitter.com/dhconnelly">twitter</a>
-      </nav>
-      <div id="projects">
-	<header>
-	  <h3>Projects</h3>
-	</header>
-	<ul>
-	  <li><a href="http://dhconnelly.com/paip-python">paip-python</a>, classic AI programs in Python</li>
-	  <li><a href="http://github.com/dhconnelly/rtreego">rtreego</a>, an R-Tree library for Go</li>
-	  <li><a href="http://dhconnelly.com/docgo">docgo</a>, literate-programming-style docs for Go</li>
-	  <li><a href="http://dhconnelly.com/litebrite">litebrite</a>, HTML syntax highlighting for Go</li>
-	</ul>
-      </div>
-      <div id="posts">
-	<header>
-	  <h3>Blog Entries</h3>
-	</header>
-	<ul>
-	  <li><a href="http://blog.dhconnelly.com/2012/04/self-adaptation-strategies-for-game.html">Self-Adaptation Strategies for Game-Playing Agents</a></li>
-	  <li><a href="http://blog.dhconnelly.com/2012/03/why-i-like-lots-of-languages-and-go-is.html">Why I like lots of languages, and Go is pretty neat too</a></li>
-	  <li><a href="http://dhconnelly.blogspot.com/2012/02/yet-another-git-reading-list.html">Yet another Git reading list</a></li>
-	  <li><a href="http://dhconnelly.blogspot.com/2012/02/new-go-tools-docgo-and-litebrite.html">New Go tools: docgo and litebrite</a></li>
-	  <li><a href="http://dhconnelly.blogspot.com/2012/02/rtreego.html">rtreego</a></li>
-	  <li><a href="http://dhconnelly.blogspot.com/2012/01/hello-2012.html">Hello, 2012</a></li>
-	</ul>
-      </div>
-    </div>
-  </body>
-</html>
+---
+layout: default
+title: Daniel Connelly
+---
+
+<header>
+  <h1>Daniel Connelly</h1>
+  <summary>computer programmer and graduate student at Georgia Tech</summary>
+  <nav>
+    <a href="http://github.com/dhconnelly">github</a>
+    <a href="http://linkedin.com/in/dhconnelly">linkedin</a>
+    <a href="http://twitter.com/dhconnelly">twitter</a>
+    <a href="photos.html">photos</a>
+    <a href="mailto:dhconnelly@gmail.com">email</a>
+  </nav>
+</header>
+
+<section class="main-section" id="projects">
+  <header>
+    <h3>Projects</h3>
+  </header>
+
+  <ul>
+    <li>
+      <a href="http://dhconnelly.com/paip-python">paip-python</a>
+      <summary>classic AI programs in Python</summary>
+    </li>
+    <li>
+      <a href="http://github.com/dhconnelly/rtreego">rtreego</a>
+      <summary>an R-Tree library for Go</summary>
+    </li>
+    <li>
+      <a href="http://dhconnelly.com/docgo">docgo</a>
+      <summary>literate-programming-style docs for Go</summary>
+    </li>
+    <li>
+      <a href="http://dhconnelly.com/litebrite">litebrite</a>
+      <summary>HTML syntax highlighting for Go</summary>
+    </li>
+  </ul>
+</section>
+
+<section class="main-section" id="blog">
+  <header>
+    <h3>Blog Entries</h3>
+  </header>
+
+  <ul>
+    {% for post in site.posts %}
+    <li><a href="{{ post.url }}">{{ post.title }}</a></li>
+    {% endfor %}
+
+    <li><a href="http://blog.dhconnelly.com/2012/04/self-adaptation-strategies-for-game.html">Self-Adaptation Strategies for Game-Playing Agents</a></li>
+    <li><a href="http://blog.dhconnelly.com/2012/03/why-i-like-lots-of-languages-and-go-is.html">Why I like lots of languages, and Go is pretty neat too</a></li>
+    <li><a href="http://dhconnelly.blogspot.com/2012/02/yet-another-git-reading-list.html">Yet another Git reading list</a></li>
+    <li><a href="http://dhconnelly.blogspot.com/2012/02/new-go-tools-docgo-and-litebrite.html">New Go tools: docgo and litebrite</a></li>
+    <li><a href="http://dhconnelly.blogspot.com/2012/02/rtreego.html">rtreego</a></li>
+    <li><a href="http://dhconnelly.blogspot.com/2012/01/hello-2012.html">Hello,
+	2012</a></li>
+  </ul>
+</section>
