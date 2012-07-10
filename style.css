@@ -18,8 +18,13 @@ a:active, a:hover {
     text-decoration: none;
 }
 
-h1 {
+header h1 {
     margin: 0px;
+    padding-bottom: 10px;
+}
+
+header time {
+    font-style: italic;
 }
 
 .main-section {
@@ -42,4 +47,8 @@ h1 {
 
 .leaf-nav {
     margin-top: 20px;
+}
+
+.blog-entry blockquote {
+    color: #8CBE64;
 }
