@@ -20,10 +20,10 @@ a:active, a:hover {
 
 header h1 {
     margin: 0px;
-    padding-bottom: 10px;
 }
 
 header time {
+    margin-top: 10px;
     font-style: italic;
 }
 
