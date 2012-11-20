@@ -52,3 +52,30 @@ header time {
 .blog-entry blockquote {
     color: #8CBE64;
 }
+
+#topquote {
+    background: #777777;
+    border: 3px solid black;
+    color: black;
+    margin-bottom: 0;
+    margin-left: 0;
+}
+
+#topquote .attribution {
+    font-family: 'Georgia';
+    font-size: 10pt;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+#topquote pre {
+    font-family: 'Georgia';
+    font-size: 10pt;
+    font-style: italic;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    margin-left: 20px;
+    margin-right: 20px;
+}
