@@ -34,8 +34,8 @@ Interesting reads:
 
 References:
 
-- [Pro Git][progit], a complete guide and reference written by [Scott Chacon]
-  [sc] (the CIO of GitHub and the author of the aforementioned [gitref][]).
+- [Pro Git][progit], a complete guide and reference written by [Scott Chacon][sc]
+  (the CIO of GitHub and the author of the aforementioned [gitref][]).
   There's also a [print][amazon] version.
 - the Git [man pages][man]
 

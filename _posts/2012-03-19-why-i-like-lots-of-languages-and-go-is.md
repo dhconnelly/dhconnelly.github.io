@@ -221,7 +221,7 @@ languages I mentioned earlier, and I feel like the job should always determine
 the tool, so I don't want to get involved in cross-language firefights.
 Programming is what I love, not language partisanship.
 
-When Go 1 is launched, maybe give it a try.  If it doesn't have feature [X] that
+When Go 1 is launched, maybe give it a try.  If it doesn't have feature X that
 you badly want, then maybe Go is not for you.  And that's OK too.
 
 

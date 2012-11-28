@@ -1,81 +1,28 @@
 body {
     font-family: 'Droid Sans Mono', monospace;
     font-size: 12px;
-
     background-color: rgb(47,47,47);
     color: rgb(225,225,225);
-
     margin: auto;
-    width: 40em;
+    width: 450px;
     padding-top: 100px;
     padding-bottom: 100px;
 }
-
 a, a:link, a:visited {
     color: rgb(250,200,100);
 }
 a:active, a:hover {
     text-decoration: none;
 }
-
-header h1 {
-    margin: 0px;
-}
-
-header time {
-    margin-top: 10px;
-    font-style: italic;
-}
-
-.main-section {
-    padding-top: 10px;
-}
-.main-section h3 {
-    margin-bottom: 5px;
+blockquote {
+    color: #8CBE64;
 }
 .main-section ul {
-    margin-top: 0px;
-    padding-left: 0px;
-    margin-bottom: 0px;
+    padding-left: 0;
 }
 .main-section li {
     list-style-type: none;
 }
 .main-section summary {
     display: inline;
-}
-
-.leaf-nav {
-    margin-top: 20px;
-}
-
-.blog-entry blockquote {
-    color: #8CBE64;
-}
-
-#topquote {
-    background: #777777;
-    border: 3px solid black;
-    color: black;
-    margin-bottom: 0;
-    margin-left: 0;
-}
-
-#topquote .attribution {
-    font-family: 'Georgia';
-    font-size: 10pt;
-    margin-top: 15px;
-    margin-bottom: 15px;
-    margin-left: 20px;
-    margin-right: 20px;
-}
-
-#topquote pre {
-    font-family: 'Georgia';
-    font-size: 10pt;
-    font-style: italic;
-    margin-top: 15px;
-    margin-bottom: 15px;
-    margin-left: 20px;
-    margin-right: 20px;
 }
