@@ -5,8 +5,8 @@ body {
     color: rgb(225,225,225);
     margin: auto;
     width: 450px;
-    padding-top: 100px;
-    padding-bottom: 100px;
+    padding-top: 50px;
+    padding-bottom: 50px;
 }
 a, a:link, a:visited {
     color: rgb(250,200,100);
