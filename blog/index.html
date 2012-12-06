@@ -1,0 +1,37 @@
+---
+title: blog
+layout: sub
+---
+
+<header>
+  <h1>dhconnelly.com/blog</h1>
+</header>
+
+<section class="main-section" id="blog">
+  <header>
+    <h3>Entries</h3>
+  </header>
+  <ul>
+    {% for post in site.posts %}
+    <li><time>{{ post.date | date_to_string }}</time> <a href="{{ post.url }}">{{ post.title }}</a></li>
+    {% endfor %}
+
+    <li><time>10 Jan 2012</time> <a href="http://dhconnelly.blogspot.com/2012/01/hello-2012.html">Hello,
+    2012</a></li>
+  </ul>
+</section>
+
+<section class="main-section" id="reading-list">
+  <header>
+    <h3>Reading List</h3>
+  </header>
+  <ul>
+    <li><a href="https://brendaneich.com/">Brendan Eich</a></li>
+    <li><a href="http://calculist.org/">Dave Herman</a></li>
+    <li><a href="http://marijnhaverbeke.nl/blog/">Marijn Haverbeke</a></li>
+    <li><a href="http://mrale.ph/">Vyacheslav Egorov</a></li>
+    <li><a href="http://matt.might.net/articles/">Matt Might</a></li>
+    <li><a href="http://eli.thegreenplace.net/">Eli Bendersky</a></li>
+  </ul>
+</section>
+

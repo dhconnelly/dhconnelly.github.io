@@ -1,22 +1,31 @@
 body {
-    font-family: 'Droid Sans Mono', monospace;
-    font-size: 12px;
-    background-color: rgb(47,47,47);
-    color: rgb(225,225,225);
+    font-family: 'Monaco', monospace;
+    font-size: 10pt;
+    background-color: #272822;
+    color: #F8F8F2;
     margin: auto;
-    width: 450px;
+    width: 500px;
     padding-top: 50px;
     padding-bottom: 50px;
 }
+
 a, a:link, a:visited {
     color: rgb(250,200,100);
 }
 a:active, a:hover {
     text-decoration: none;
 }
+
 blockquote {
     color: #8CBE64;
 }
+ul {
+    padding-left: 20px;
+}
+li {
+    list-style-type: square;
+}
+
 .main-section ul {
     padding-left: 0;
 }
@@ -25,4 +34,21 @@ blockquote {
 }
 .main-section summary {
     display: inline;
+}
+.main-section li time {
+    width: 96px;
+    margin-left: -96px;
+}
+
+.blog-entry {
+    font-family: 'Georgia', serif;
+    text-align: justify;
+    font-size: 12pt;
+}
+
+code {
+    padding: 0;
+    margin: 0;
+    font-family: 'Droid Sans Mono', monospace;
+    font-size: 12px;
 }
