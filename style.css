@@ -1,5 +1,5 @@
 body {
-    font-family: 'Monaco', 'Droid Sans Mono', monospace;
+    font-family: 'Monaco', monospace;
     font-size: 10pt;
     background-color: #272822;
     color: #F8F8F2;
@@ -56,6 +56,6 @@ pre {
 code {
     padding: 0;
     margin: 0;
-    font-family: 'Droid Sans Mono', monospace;
+    font-family: monospace;
     font-size: 12px;
 }
