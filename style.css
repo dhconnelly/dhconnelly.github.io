@@ -16,6 +16,10 @@ a:active, a:hover {
     text-decoration: none;
 }
 
+header h1, header h2, header h3 {
+    margin-bottom: 0;
+};
+
 blockquote {
     color: #8CBE64;
 }
@@ -34,10 +38,6 @@ li {
 }
 .main-section summary {
     display: inline;
-}
-.main-section li time {
-    width: 96px;
-    margin-left: -96px;
 }
 
 .blog-entry {

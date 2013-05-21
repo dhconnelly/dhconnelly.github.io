@@ -1,0 +1,16 @@
+---
+title: writing
+layout: sub
+---
+
+<header>
+  <h1>writing</h3>
+</header>
+
+<section class="main-section" id="personal">
+  <ul>
+    {% for post in site.posts %}
+    <li><time datetime="{{ post.date | date: "%Y-%m-%d" }}">{{ post.date | date: "%d %B %Y"}}</time>: <a href="{{ post.url }}">{{ post.title }}</a></li>
+    {% endfor %}
+  </ul>
+</section>
