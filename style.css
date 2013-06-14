@@ -20,6 +20,10 @@ header h1, header h2, header h3 {
     margin-bottom: 0;
 };
 
+header summary {
+    display: block;
+}
+
 blockquote {
     color: #8CBE64;
 }
