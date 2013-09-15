@@ -1,31 +1,30 @@
-body {
-  display: flex;
-  flex-flow: row;
+html { 
   margin: 0;
 }
+body {
+  margin: 0;
+  padding: 0 230px 0 0;
+  position: absolute;
+}
 #content {
-  flex: 1 1;
-  order: 1;
-  margin: 30px 0 50px 0;
+  margin: 0;
+  overflow: hidden;
+  padding: 30px 0 50px 0;
 }
 #sidebar {
   background: #2980B9;
   color: #ECF0F1;
-  display: flex;
-  flex: none;
-  flex-flow: column;
+  float: right;
   font-family: 'Lato', sans-serif;
   font-size: 14px;
-  order: 2;
+  height: 100%;
+  position: absolute;
+  right: 0;
   width: 230px;
 }
 #sidebar img {
-  order: 1;
   width: 100%;
 }
-#sidebar #about { order: 2; }
-#sidebar #recent { order: 3; }
-#sidebar #links { order: 4; }
 #sidebar p, #sidebar nav {
   color: #ECF0F1;
   margin: 20px 20px 20px 20px;
@@ -86,20 +85,23 @@ article p {
 }
 
 @media only screen and (max-width: 800px) {
-  body { flex-flow: column; }
+  body {
+    padding: 150px 0 0 0;
+  }
   #content { 
-    order: 2; 
     width: 100% 
   }
   #sidebar { 
-    flex-flow: row;
-    order: 1; 
     height: 150px;
     width: 100%;
+    top: 0;
   }
   #sidebar img {
-    flex: none;
+    float: left;
     height: 100%;
     width: auto;
+  }
+  #sidebar p, #sidebar nav {
+    padding-left: 150px;
   }
 }
