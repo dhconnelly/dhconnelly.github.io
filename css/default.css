@@ -7,10 +7,30 @@ body {
   padding: 0 230px 0 0;
   position: absolute;
 }
+
+a:link { 
+  color: black; 
+}
+a:visited { 
+  color: black; 
+}
+a:hover { 
+  color: black; 
+  text-decoration: none; 
+}
+a:active { 
+  color: black; 
+  text-decoration: none; 
+}
+
 #content {
   margin: 0;
   overflow: hidden;
 }
+#content ::selection {
+  background: #E67E22;
+}
+
 #sidebar {
   background: #2980B9;
   color: #ECF0F1;
@@ -20,6 +40,9 @@ body {
   position: absolute;
   right: 0;
   width: 230px;
+}
+#sidebar ::selection {
+  background: #E74C3C;
 }
 #sidebar img {
   width: 100%;
@@ -32,18 +55,40 @@ body {
   font-family: 'Lato', sans-serif;
   margin: 20px 20px 20px 20px;
 }
+#sidebar h1, #sidebar h2, #sidebar h3 {
+  margin: 0 0 5px 0;
+}
 #sidebar nav ul { 
-  list-style-type: none; 
-  padding: 0; 
+  margin: 0;
+  padding-left: 0; 
+  list-style-type: none;
+  list-style-position: inside;
+}
+#sidebar li a {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 #sidebar a {
   color: #ECF0F1;
 }
-
-a:link { color: black; }
-a:visited { color: black; text-decoration: none;  }
-a:hover { color: black; text-decoration: none; }
-a:active { color: black; text-decoration: none;  }
+#sidebar a:link { 
+  text-decoration: none; 
+  border-bottom: 1px solid;
+}
+#sidebar a:visited { 
+  text-decoration: none; 
+  border-bottom: 1px solid;
+}
+#sidebar a:hover { 
+  text-decoration: none; 
+  border-bottom: 1px solid transparent;
+}
+#sidebar a:active { 
+  text-decoration: none; 
+  border-bottom: 1px solid transparent;
+}
 
 .posts-pagination,
 a.navback {
@@ -70,14 +115,15 @@ article time {
   font-family: 'Gentium Book Basic', serif;
   font-size: 16px;
 }
-article h1 {
+h1, h2, h3 {
   font-family: 'Lato', sans-serif;
+}
+article h1 {
   font-weight: bold;
   font-size: 42px;
   margin: 10px 0 0 0;
 }
 article h2 {
-  font-family: 'Lato', sans-serif;
   font-size: 24px;
   margin: 20px 0 0 0;
 }
@@ -111,6 +157,9 @@ article p {
     position: relative;
     margin-bottom: 15px;
   }
+  #sidebar #recent {
+    display: none;
+  }
   #sidebar img {
     float: left;
     width: 100px;
@@ -120,16 +169,8 @@ article p {
     padding-left: 100px;
   }
 }
-@media (max-width: 372px) {
-  #sidebar nav {
-    display: none;
-  }
-}
-@media (max-width: 319px) {
-  #sidebar img {
-    display: none;
-  }
-  #sidebar p, #sidebar nav {
-    padding-left: 0px;
+@media (max-width: 330px) {
+  #sidebar p {
+    margin: 4px 8px 4px 8px;
   }
 }
