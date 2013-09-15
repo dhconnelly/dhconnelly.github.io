@@ -1,5 +1,6 @@
 html { 
   margin: 0;
+  -webkit-text-size-adjust: none;
 }
 body {
   margin: 0;
@@ -14,7 +15,6 @@ body {
   background: #2980B9;
   color: #ECF0F1;
   float: right;
-  font-family: 'Lato', sans-serif;
   font-size: 14px;
   height: 100%;
   position: absolute;
@@ -24,8 +24,12 @@ body {
 #sidebar img {
   width: 100%;
 }
+#sidebar p {
+  text-align: justify;
+}
 #sidebar p, #sidebar nav {
   color: #ECF0F1;
+  font-family: 'Lato', sans-serif;
   margin: 20px 20px 20px 20px;
 }
 #sidebar nav ul { 
@@ -84,9 +88,9 @@ article p {
   text-align: justify;
 }
 
-@media only screen and (max-width: 600px) {
+@media (max-width: 720px) {
   body {
-    padding: 30% 0 0 0;
+    padding: 0;
   }
   article {
     margin: 4% 5% 0 5%;
@@ -103,14 +107,29 @@ article p {
   #sidebar { 
     height: auto;
     width: 100%;
-    top: 0;
+    display: block;
+    position: relative;
+    margin-bottom: 15px;
   }
   #sidebar img {
     float: left;
-    width: 30%;
+    width: 100px;
   }
   #sidebar p, #sidebar nav {
     margin: 10px;
-    padding-left: 30%;
+    padding-left: 100px;
+  }
+}
+@media (max-width: 372px) {
+  #sidebar nav {
+    display: none;
+  }
+}
+@media (max-width: 319px) {
+  #sidebar img {
+    display: none;
+  }
+  #sidebar p, #sidebar nav {
+    padding-left: 0px;
   }
 }
