@@ -3,10 +3,18 @@
   <head>
     <meta charset="UTF-8">
     <title>{{ page.title }}</title>
-    <meta name="viewport" content="width=device-width">
-    <link href="/css/default.css">
+    <link rel="stylesheet" type="text/css" href="/css/default.css">
+    <link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic:400,700,400italic'
+          rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Lato:400,700'
+          rel='stylesheet' type='text/css'>
   </head>
   <body>
-    <div id="content">{{ content }}</div>
+      <main id="content">{{ content }}</main>
+      <aside id="sidebar">
+        <img id="photo" src="/img/dhc.jpg">
+        <p id="about">{% include about.html %}</p>
+        <nav id="links">{% include links.html %}</nav>
+      </aside>
   </body>
 </html>

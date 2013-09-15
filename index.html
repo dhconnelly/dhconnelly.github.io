@@ -3,8 +3,28 @@ layout: default
 title: Daniel Connelly
 ---
 
-<ul>
 {% for post in paginator.posts %}
-  <li><a href="{{ post.url }}">{{ post.title }}</a></li>
+<article class="paginated">
+  <a href="{{ post.url }}"><h1>{{ post.title }}</h1></a>
+  <time>{{ post.date | date_to_long_string }}</time>
+  {{ post.content }}
+</article>
 {% endfor %}
-</ul>
+
+<nav class="posts-pagination">
+  {% if paginator.previous_page %}
+    {% if paginator.previous_page == 1 %}
+      <a class="newer" href="/">Newer</a>
+    {% else %}
+      <a class="newer" href="/page{{ paginator.previous_page }}">Newer</a>
+    {% endif %}
+  {% else %}
+    Newer
+  {% endif %}
+|
+  {% if paginator.next_page %}
+    <a class="older" href="/page{{ paginator.next_page }}">Older</a>
+  {% else %}
+    Older
+  {% endif %}
+</nav>
