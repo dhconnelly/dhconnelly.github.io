@@ -14,7 +14,7 @@ remained that a visit today will reward the traveler with a faithfully
 renovated and fascinating medieval town.
 
 As an American tourist, one of the most striking things about German cities is
-that German medieval architecture doesn't match our fairytale imagingings.
+that German medieval architecture doesn't match our fairytale imaginings.
 This is especially true of the churches, which are more plain than, and rarely
 approach the violence of, Gothic cathedrals.  After all, the dominant style in
 medieval Germany was not the Gothic, but the Romanesque, having been
