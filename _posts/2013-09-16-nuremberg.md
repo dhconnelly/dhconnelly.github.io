@@ -71,8 +71,8 @@ Arthur facing off against Don Pedro to pull the Sword from the Stone, only to
 be upstaged by an old woman.  Guinevere was ghastly.  It was a spectacle.
 
 
-[square]: /img/nürnberg/square.jpg  "Square with cafés and shops"
-[market]: /img/nürnberg/market.jpg  "Craft market"
-[skyline]: /img/nürnberg/skyline.jpg  "City skyline from the castle"
-[pegnitz]: /img/nürnberg/pegnitz.jpg  "Pegnitz river through the city"
-[moat]: /img/nürnberg/moat.jpg  "Castle moat approaching the medieval fest"
+[square]: /img/nuremberg/square.jpg  "Square with cafés and shops"
+[market]: /img/nuremberg/market.jpg  "Craft market"
+[skyline]: /img/nuremberg/skyline.jpg  "City skyline from the castle"
+[pegnitz]: /img/nuremberg/pegnitz.jpg  "Pegnitz river through the city"
+[moat]: /img/nuremberg/moat.jpg  "Castle moat approaching the medieval fest"
