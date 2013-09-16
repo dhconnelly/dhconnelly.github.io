@@ -73,22 +73,6 @@ a:active {
 #sidebar a {
   color: #ECF0F1;
 }
-#sidebar a:link { 
-  text-decoration: none; 
-  border-bottom: 1px solid;
-}
-#sidebar a:visited { 
-  text-decoration: none; 
-  border-bottom: 1px solid;
-}
-#sidebar a:hover { 
-  text-decoration: none; 
-  border-bottom: 1px solid transparent;
-}
-#sidebar a:active { 
-  text-decoration: none; 
-  border-bottom: 1px solid transparent;
-}
 
 .posts-pagination,
 a.navback {
