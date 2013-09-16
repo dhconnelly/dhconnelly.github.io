@@ -69,7 +69,7 @@ suburbs of Georgia.  I love anachronism, and of course the castle is the
 natural place to hold such a festival if you happen to live near one, but the
 idea of fake knights walking around and jousting in a real moat is somehow more
 amusing than doing it in rural America.  Anyway, there were the usual merchants
-in period-appropriate vestiments peddling artisinal handicrafts, plenty of
+in period-appropriate clothing peddling artisinal handicrafts, plenty of
 sausages and beer, bagpipe bands, fire-eaters, tournaments, and so on.  I had
 my first experience with mead, which is delicious, and really does taste like
 honey.
