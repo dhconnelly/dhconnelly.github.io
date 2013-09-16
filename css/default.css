@@ -133,6 +133,17 @@ article p {
   margin: 10px 0 0 0;
   text-align: justify;
 }
+article img {
+  width: 49%;
+}
+article p a:only-child > img {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+article ol, article li {
+  font-family: 'Gentium Book Basic', serif;
+}
 
 @media (max-width: 720px) {
   body {
