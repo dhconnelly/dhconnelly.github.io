@@ -8,6 +8,7 @@ title: Daniel Connelly
   <a href="{{ post.url }}"><h1>{{ post.title }}</h1></a>
   <time>{{ post.date | date_to_long_string }}</time>
   {{ post.content }}
+  <a href="{{ post.url }}#disqus_thread" class="comments">Comments</a>
 </article>
 {% endfor %}
 
@@ -28,3 +29,14 @@ title: Daniel Connelly
     Older
   {% endif %}
 </nav>
+
+<script type="text/javascript">
+var disqus_shortname = 'danielconnelly';
+(function () {
+  var s = document.createElement('script'); s.async = true;
+  s.type = 'text/javascript';
+  s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+  (document.getElementsByTagName('HEAD')[0] || 
+   document.getElementsByTagName('BODY')[0]).appendChild(s);
+}());
+</script>

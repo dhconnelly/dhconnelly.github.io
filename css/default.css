@@ -129,6 +129,10 @@ article ol, article li {
   font-family: 'Gentium Book Basic', serif;
 }
 
+article a.comments {
+  margin-top: 10px;
+  display: inline-block;
+}
 #disqus_thread {
   margin: 4% 5% 0 5%;
 }
