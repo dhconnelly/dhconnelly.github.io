@@ -127,6 +127,9 @@ article p a:only-child > img {
 article ol, article li {
   font-family: 'Gentium Book Basic', serif;
 }
+article a {
+  font-family: 'Gentium Book Basic', serif;
+}
 
 article a.comments {
   margin-top: 10px;
