@@ -1,42 +1,29 @@
----
-layout: default
-title: Daniel Connelly
----
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>Daniel Connelly</title>
+    <style>
+    body {
+      font-family: 'DejaVu Sans Mono', monospace;
+      font-size: 10pt;
+      background-color: #272822;
+      color: #F8F8F2;
+      margin: auto;
+      max-width: 500px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+    }
 
-{% for post in paginator.posts %}
-<article class="paginated">
-  <a href="{{ post.url }}"><h1>{{ post.title }}</h1></a>
-  <time>{{ post.date | date_to_long_string }}</time>
-  {{ post.content }}
-  <a href="{{ post.url }}#disqus_thread" class="comments">Comments</a>
-</article>
-{% endfor %}
-
-<nav class="posts-pagination">
-  {% if paginator.previous_page %}
-    {% if paginator.previous_page == 1 %}
-      <a class="newer" href="/">Newer</a>
-    {% else %}
-      <a class="newer" href="/page{{ paginator.previous_page }}">Newer</a>
-    {% endif %}
-  {% else %}
-    Newer
-  {% endif %}
-|
-  {% if paginator.next_page %}
-    <a class="older" href="/page{{ paginator.next_page }}">Older</a>
-  {% else %}
-    Older
-  {% endif %}
-</nav>
-
-<script type="text/javascript">
-var disqus_shortname = 'danielconnelly';
-(function () {
-  var s = document.createElement('script'); s.async = true;
-  s.type = 'text/javascript';
-  s.src = '//' + disqus_shortname + '.disqus.com/count.js';
-  (document.getElementsByTagName('HEAD')[0] || 
-   document.getElementsByTagName('BODY')[0]).appendChild(s);
-}());
-</script>
+    a, a:link, a:visited {
+      color: rgb(250,200,100);
+    }
+    a:active, a:hover {
+      text-decoration: none;
+    }
+    </style>
+  </head>
+  <body>
+    <p>Hi, I'm Daniel.  I'm a computer programmer.  I work for Google on the Chrome team in Munich, Germany, where I live with my wife Nina.  Find me on <a href="https://github.com/dhconnelly">GitHub</a> or write me an <a href="mailto:dhconnelly@gmail.com">email</a>.</p>
+  </body>
+</html>
