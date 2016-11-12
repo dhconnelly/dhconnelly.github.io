@@ -1,0 +1,75 @@
+==================================================================
+https://keybase.io/dhconnelly
+--------------------------------------------------------------------
+
+I hereby claim:
+
+  * I am an admin of http://dhconnelly.com
+  * I am dhconnelly (https://keybase.io/dhconnelly) on keybase.
+  * I have a public key with fingerprint D398 9646 0911 1113 522F  BE63 E048 B342 DE7D BB12
+
+To do so, I am signing this object:
+
+{
+    "body": {
+        "key": {
+            "eldest_kid": "01013556220a66b4989159fb4daa7ddc1a234675b4a8696c606bd9a51a08d472fcc10a",
+            "fingerprint": "d398964609111113522fbe63e048b342de7dbb12",
+            "host": "keybase.io",
+            "key_id": "e048b342de7dbb12",
+            "kid": "01013556220a66b4989159fb4daa7ddc1a234675b4a8696c606bd9a51a08d472fcc10a",
+            "uid": "59b15da03ba34ae732b8d9ef559dec19",
+            "username": "dhconnelly"
+        },
+        "revoke": {
+            "sig_ids": [
+                "d0fd266295941a395be794e4dd85ee89cd80f9ab250208eb51a65191e7e5eb810f"
+            ]
+        },
+        "service": {
+            "hostname": "dhconnelly.com",
+            "protocol": "http:"
+        },
+        "type": "web_service_binding",
+        "version": 1
+    },
+    "ctime": 1478982175,
+    "expire_in": 157680000,
+    "prev": "f6571ca605148fbce92546c77846250def8fd03eac3fea8cf18f6f475a2fc29b",
+    "seqno": 8,
+    "tag": "signature"
+}
+
+which yields the signature:
+
+-----BEGIN PGP MESSAGE-----
+Version: Keybase OpenPGP v2.0.58
+Comment: https://keybase.io/crypto
+
+yMJ0AnicrZJdaB1FFMdvbJq2V6J5UKzgRzsaIxrqzuzM7MylrWCfbKnWQrTaXK4z
+O2dzl5vuXu/uTY39wNZK1FoVsYigoUVBrIgGjFBKTNQGr/iBWmhaaGnVRguSNi0q
+GI06G/RJHz0vw8z8z+/8z5k53Dovl28633ig/bOz+b1Nn37wSz23oeOR67cgHZt+
+VNiCKjC3QK+BJC1VQoMKyMEOdhnjhDiKc02lkJjJQFOjlGeMjxVxKfeYpkpwyX3u
+cG2kYlg5wlCPBL6PHYU6URBGPVCr1sIotVjjWhCn3JE4C5cREmjgLjhUaJcSA57R
+GhObWI6TLMOa0yqBZWFsz+ymNGfvP/T/s+/6HI5JjZlRjquVSxV4LtHCSAgYkwZ8
+LDNhArVIbYKsu7IfRxH09vajbZ2oBn1xBbLJJmGPtZ2gwkZknMAQzolkkmLlSqbB
+kxSoMYIBCOkb4QRSacIc4gjQ1hhnWGLwgIEW2AlQ0bJtzb7Qn4Nnc/pX/WV+vMl6
+q9biNPbjXntXTtNqIbOV9lcz7WbQpb8pJR1Gxj6TTeiDWhLGESpgq/TTMMNi6gkp
+CPZYJ4KHq2ENSmGmYB4Xjo2sDPRZZMCZh33FHYapCLQPkjDKfc8TlNt+DAQiMI4L
+yncDUMIPsAh4QD2m7NiJ1Cjr66EoRgVhbaoei7STi1RarwHa9uFYd3OuKZ9rmX9J
+9n1z+UVt/3zq8bYFvzVPtFysf3Xg3uFLvx255+Zdt+w4WH1i87m3Hp3CXY15Z6KL
+e75fNT7Zdej1tlN/Dj956vLTS36fKa7Z2rFk9e7iuXw40/j1+PHPFyyv/5H8uPKV
+7bN3vLvo5X1n35t47UF0ZGBm+U8dxcGRvS92DAw27n9jqSx3vXpg960nV1XXrh+/
+8p0TbWMbp8nP1WMT0+fjT+SXZxb+MHT74Z3PP2ZyV3/cWpo9ds2K24ZfeH/qrvKR
+9nTy62T7dTueubblsuahwadm7mtvvjsqrntpqnvDyjuPNprcfUPu4wvf/G7kqtyN
+Hx2c3rl19IvZC60rvrmCVWZHpw/d0L1/svL2iV03rVm3/7mnnx1j60ujAxfWTuCh
+xX8B6Q1kpQ==
+=Qjf6
+-----END PGP MESSAGE-----
+
+And finally, I am proving ownership of this host by posting or
+appending to this document.
+
+View my publicly-auditable identity here: https://keybase.io/dhconnelly
+
+==================================================================
