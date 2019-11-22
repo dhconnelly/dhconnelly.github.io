@@ -1,38 +1,19 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-    <title>Daniel Connelly</title>
-    <style>
-    body {
-      font-family: 'menlo', monospace;
-      font-size: 10pt;
-      background-color: #272822;
-      color: #F8F8F2;
-      margin: auto;
-      max-width: 500px;
-      padding-top: 50px;
-      padding-bottom: 50px;
-    }
-    a, a:link, a:visited {
-      color: rgb(250,200,100);
-    }
-    a:active, a:hover {
-      text-decoration: none;
-    }
-    @media only screen and (max-device-width: 480px) {
-      body {
-        font-family: 'menlo', monospace;
-        font-size: 20pt;
-        background-color: #272822;
-        color: #F8F8F2;
-        max-width: initial;
-        padding: 70px;
-      }
-    }
-    </style>
-  </head>
-  <body>
-    <p>Daniel Connelly is a software engineer at Google in New York City. He can be found at <a href="https://github.com/dhconnelly">Github</a> or via email at dhconnelly at gmail dot com.
-  </body>
-</html>
+---
+layout: default
+title: Daniel Connelly
+---
+
+<div id="home">
+   <p class="intro">
+     Software Engineer at Google in New York. Find me on
+     <a href="https://github.com/dhconnelly">GitHub</a> or send an
+     <a href="mailto:dhconnelly@gmail.com">email</a>.
+   </p>
+   
+   <h2>Blog posts</h2>
+   <ul class="posts">
+      {% for post in site.posts %}
+      <li><span>&gt; {{ post.date | date_to_string }}</span> <a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a></li>
+      {% endfor %}
+   </ul>
+</div>

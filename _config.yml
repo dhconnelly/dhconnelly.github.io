@@ -1,4 +1,11 @@
-safe: true
-permalink: /:year/:month/:day/:title.html
-paginate: 5
-paginate_path: "/page:num"
+name: "Daniel Connelly"
+markdown: redcarpet
+highlighter: pygments
+permalink: :title
+exclude: [README.md, LICENSE, Makefile]
+baseurl: ''
+
+# Information for the Atom feed
+dhconnelly:
+   author: "Daniel Connelly"
+   email: "dhconnelly@gmail.com"
