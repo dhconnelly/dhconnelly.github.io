@@ -2,6 +2,7 @@
 layout: post
 title: "Hello, blog"
 date: 2019-11-22
+permalink: /hello-blog.html
 ---
 
 Going to write some things. I'd have started weeks ago, but static
