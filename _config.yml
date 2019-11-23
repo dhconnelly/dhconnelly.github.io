@@ -1,5 +1,4 @@
 name: "Daniel Connelly"
-markdown: redcarpet
 highlighter: rouge
 permalink: :title
 exclude: [README.md, LICENSE, Makefile]
