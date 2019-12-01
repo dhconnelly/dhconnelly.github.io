@@ -99,5 +99,34 @@ just ends up inflating the size of the program. In the end I opted to avoid the
 abstraction and bundle scanning with parsing together. It's less than twenty
 lines of code, and maybe a better abstraction will appear later.
 
+**Edit**: I looked at the [AoC
+subreddit](https://www.reddit.com/r/adventofcode/comments/e4axxe/2019_day_1_solutions/)
+and everyone writes very short solutions! So I wrote a shorter, less modular
+version that uses `fmt.Fscanf` instead of `bufio.Scanner` with `fuelForMass`
+and `fuelSum` as defined above:
+
+```
+func main() {
+	f, err := os.Open(os.Args[1])
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+	sum, recSum := 0, 0
+	var mass int
+	for {
+		if _, err := fmt.Fscanf(f, "%d\n", &mass); err == io.EOF {
+			break
+		} else if err != nil {
+			log.Fatal(err)
+		}
+		sum += fuelForMass(mass)
+		recSum += fuelSum(mass)
+	}
+	fmt.Println(sum)
+	fmt.Println(recSum)
+}
+```
+
 Full code is
-[here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day1/day1.go).
+[here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day1/).
