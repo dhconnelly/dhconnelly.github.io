@@ -197,8 +197,12 @@ func executeWith(data []int, noun, verb int) int {
 }
 ```
 
-To find the answer I just brute-force searched for the noun and verb. Here's
-the rest of the code:
+To find the answer I just brute-force searched for the noun and verb. An
+algorithmically cleverer solution is not obvious to me, but since the search
+is embarrassingly parallel, dividing the search space and launching some
+goroutines might speed it up. Quitting early when one of the goroutines found
+the answer could be implemented with a second `done` channel. I might come
+back later and implement that, but for now here's the rest of the code:
 
 ```
 func main() {
