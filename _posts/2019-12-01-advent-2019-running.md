@@ -18,7 +18,7 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 Both parts were straightfoward. Each line of the input is just an integer, so
 we iterate over each line and convert it. For part 1 we just apply the
 fuelToMass function to each value and sum the total, while for part 2 we
-repeatedly apply fuelToMass until it becomes nonzero.
+repeatedly apply fuelToMass until it becomes negative.
 
 ```
 func fuelForMass(mass int) int {
