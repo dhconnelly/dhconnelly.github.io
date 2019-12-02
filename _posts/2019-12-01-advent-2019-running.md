@@ -226,3 +226,13 @@ func main() {
 
 Full code and inputs and outputs are
 [here](https://github.com/dhconnelly/advent-of-code-2019/tree/master/day2).
+
+**Edit**: Some folks on Reddit
+([1](https://www.reddit.com/r/adventofcode/comments/e4u0rw/2019_day_2_solutions/f9fm5tv/)
+[2](https://www.reddit.com/r/adventofcode/comments/e4u0rw/2019_day_2_solutions/f9fljyn/)
+among others) came up with clever solutions to part 2 that don't use brute
+force! One used a contraint solver, which I've not seen since college and
+don't remember much about, and another used symbolic algebra. Shout out to
+Eric, the creator, for not requiring these approaches but making them
+possible! (He did a talk about creating Advent of Code that's worth watching.
+Link is [here](https://www.youtube.com/watch?v=bS9882S0ZHs))
