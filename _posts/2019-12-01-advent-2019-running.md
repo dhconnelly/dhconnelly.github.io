@@ -5,14 +5,13 @@ date: 2019-12-01
 permalink: /advent-of-code-2019-commentary.html
 ---
 
-Here's my running commentary on the daily puzzles of [Advent of Code
-2019](https://adventofcode.com/2019); the full code is on
-[GitHub](https://github.com/dhconnelly/advent-of-code-2019). **Warning**:
-Contains spoilers!
+Here's my running commentary on [Advent of Code
+2019](https://adventofcode.com/2019), for which I'm using Go. The full code is
+available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 
 ## Table of Contents
 
-[Day 1](#day-1)
+[Day 1](#day-1) [Day 2](#day-2)
 
 ## Day 1
 
@@ -107,26 +106,119 @@ and `fuelSum` as defined above:
 
 ```
 func main() {
-	f, err := os.Open(os.Args[1])
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
-	sum, recSum := 0, 0
-	var mass int
-	for {
-		if _, err := fmt.Fscanf(f, "%d\n", &mass); err == io.EOF {
-			break
-		} else if err != nil {
-			log.Fatal(err)
-		}
-		sum += fuelForMass(mass)
-		recSum += fuelSum(mass)
-	}
-	fmt.Println(sum)
-	fmt.Println(recSum)
+  f, err := os.Open(os.Args[1])
+  if err != nil {
+    log.Fatal(err)
+  }
+  defer f.Close()
+  sum, recSum := 0, 0
+  var mass int
+  for {
+    if _, err := fmt.Fscanf(f, "%d\n", &mass); err == io.EOF {
+      break
+    } else if err != nil {
+      log.Fatal(err)
+    }
+    sum += fuelForMass(mass)
+    recSum += fuelSum(mass)
+  }
+  fmt.Println(sum)
+  fmt.Println(recSum)
 }
 ```
 
 Full code is
 [here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day1/).
+
+
+## Day 2
+
+Reading the input was a bit different today, since it was comma-delimited
+instead of line-delimited, but I suppose one could have done `s/,/\n/g` and used
+line-reading logic. I read the entire file into memory and split around
+commas, but defining a `bufio.SplitFunc` and using `bufio.Scanner` would be
+necessary for inputs that don't fit into memory. After that, you just convert
+each token to an integer to get the data:
+
+```
+func readData(path string) []int {
+  txt, err := ioutil.ReadFile(path)
+  if err != nil {
+    log.Fatal(err)
+  }
+  toks := strings.Split(string(txt[:len(txt)-1]), ",")
+  data := make([]int, len(toks))
+  for i, tok := range toks {
+    val, err := strconv.Atoi(tok)
+    if err != nil {
+      log.Fatal(err)
+    }
+    data[i] = val
+  }
+  return data
+}
+```
+
+Running the computer is just a for-loop with a switch statement. Make sure
+you're double-indexing into the data, though, since the arguments to the
+opcode specify *addresses* and not the argument values themselves:
+
+```
+func execute(data []int) {
+  for i := 0; i < len(data); i += 4 {
+    switch data[i] {
+    case 1:
+      data[data[i+3]] = data[data[i+1]] + data[data[i+2]]
+    case 2:
+      data[data[i+3]] = data[data[i+1]] * data[data[i+2]]
+    case 99:
+      return
+    default:
+      log.Fatalf("undefined opcode at position %d: %d", i, data[i])
+    }
+  }
+}
+```
+
+This is enough to solve part 1. Note that, as mentioned in the problem text,
+for future problems we'll want to modify the loop to use an opcode-specific
+increment.
+
+For part 2 I wrapped execution into a function to create a local copy of the
+data to avoid reusing memory from previous attempts, as required:
+
+```
+func executeWith(data []int, noun, verb int) int {
+  local := make([]int, len(data))
+  copy(local, data)
+  local[1], local[2] = noun, verb
+  execute(local)
+  return local[0]
+}
+```
+
+To find the answer I just brute-force searched for the noun and verb. Here's
+the rest of the code:
+
+```
+func main() {
+  data := readData(os.Args[1])
+
+  // part 1
+  fmt.Println(executeWith(data, 12, 2))
+
+  // part 2
+  for noun := 0; noun <= 99; noun++ {
+    for verb := 0; verb <= 99; verb++ {
+      result := executeWith(data, noun, verb)
+      if result == 19690720 {
+        fmt.Println(100*noun + verb)
+        return
+      }
+    }
+  }
+}
+```
+
+Full code and inputs and outputs are
+[here](https://github.com/dhconnelly/advent-of-code-2019/tree/master/day2).
