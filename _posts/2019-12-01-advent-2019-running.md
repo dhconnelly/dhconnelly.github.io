@@ -11,7 +11,7 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 
 ## Table of Contents
 
-[Day 1](#day-1) [Day 2](#day-2)
+[Day 1](#day-1) [Day 2](#day-2) [Day 3](#day-3)
 
 ## Day 1
 
@@ -236,3 +236,140 @@ don't remember much about, and another used symbolic algebra. Shout out to
 Eric, the creator, for not requiring these approaches but making them
 possible! (He did a talk about creating Advent of Code that's worth watching.
 Link is [here](https://www.youtube.com/watch?v=bS9882S0ZHs))
+
+
+## Day 3
+
+The input is essentially two lists of vectors (magnitude and direction). I
+wasted a bunch of time switching between parsing with `ioutil.ReadFile` and
+`strings.Split` vs. `bufio.Scanner` and `bufio.Reader`, but the former used
+fewer lines so I kept it. I'll omit it here because it's uninteresting, but
+the full code is on
+[GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day3/day3.go).
+
+Once we have the input, we need to convert it into a list of coordinates along
+the paths. We'll then find intersections along the two paths. The
+vector-path-to-coord-path conversion is pretty verbose; without gofmt I'd just
+collapse all the switch case branches into single lines.
+
+```
+type vec struct {
+  dir  rune
+  dist int
+}
+
+type coord struct {
+  x, y int
+}
+
+func toPath(vecPath []vec) []coord {
+  var path []coord
+  var cur coord
+  for _, v := range vecPath {
+    var dim *int
+    d := 0
+    switch v.dir {
+    case 'U':
+      dim = &cur.y
+      d = +1
+    case 'D':
+      dim = &cur.y
+      d = -1
+    case 'R':
+      dim = &cur.x
+      d = +1
+    case 'L':
+      dim = &cur.x
+      d = -1
+    default:
+      log.Fatalf("bad direction: %s", v.dir)
+    }
+    for n := v.dist; n > 0; n-- {
+      *dim += d
+      path = append(path, cur)
+    }
+  }
+  return path
+}
+
+```
+
+Finding intersecting points and choosing the one that's closest to the
+starting point (i.e. closest to 0,0) isn't bad. I initially wasted time and
+lines of code on handling more than two wires, since I wasn't sure what would
+come in part 2. I cleaned it up a bit after finding the answer, since handling
+just two paths requires fewer loops and avoids some slices. I should have done
+that from the beginning, actually, since it's not hard to refactor from two to
+N parameters, and "maybe I'll need it later" is a terrible reason to add
+abstraction. I woke up at 5 to do this in bed in the dark, though, and I just
+didn't think clearly enough about it.
+
+To intersect the two coordinate paths, we dump the first one into a
+`map[coord]bool` representing a set, and then look for all the coordinates in
+the second path that are in that set.
+
+```
+func findIntersects(coords1, coords2 []coord) []coord {
+  coords := make(map[coord]bool)
+  for _, c := range coords1 {
+    coords[c] = true
+  }
+  var intersections []coord
+  for _, c := range coords2 {
+    if coords[c] {
+      intersections = append(intersections, c)
+    }
+  }
+  return intersections
+}
+```
+
+Finding the closest intersection is just finding the one with the smallest
+magnitude.
+
+```
+func dist(c coord) int {
+  return int(math.Abs(float64(c.x)) + math.Abs(float64(c.y)))
+}
+
+func closestIntersect(intersects []coord) int {
+  var closestDist int
+  for _, coord := range intersects {
+    if d := dist(coord); closestDist == 0 || d < closestDist {
+      closestDist = d
+    }
+  }
+  return closestDist
+}
+```
+
+For part 2, we need to find how many steps it took each path to reach each
+intersection point. Since the path coordinates are ordered according to the
+order in which they were visited, we can just iterate to find the index of the
+intersection point. Then we iterate over each intersection and add those step
+counts for the two paths:
+
+```
+func stepsTo(to coord, path []coord) int {
+  for i, cur := range path {
+    if cur == to {
+      return i + 1
+    }
+  }
+  return 0
+}
+
+func fastestIntersect(coords []coord, path1, path2 []coord) int {
+  var speed int
+  for _, c := range coords {
+    sum := stepsTo(c, path1) + stepsTo(c, path2)
+    if speed == 0 || sum < speed {
+      speed = sum
+    }
+  }
+  return speed
+}
+```
+
+That's it! Full code is
+[here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day3/day3.go).
