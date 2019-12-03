@@ -1,4 +1,4 @@
-@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,800&subset=latin,latin-ext);
+@import url(https://fonts.googleapis.com/css?family=Roboto+Mono|Open+Sans:400,800&subset=latin,latin-ext);
 
 /* Some assumptions */
 * {
@@ -42,7 +42,7 @@ a:hover { color: #2980B9; }
 
 .posts span {
    color: #aaa;
-   font-family: Monaco, "Courier New", monospace;
+   font-family: "Roboto Mono", Menlo, Monaco, "Courier New", monospace;
    font-size: 75%;
    margin-right: 1em;
 }
@@ -91,7 +91,7 @@ header a {
 
 code,
 pre {
-   font-family: Menlo, Monaco, "Courier New", monospace;
+   font-family: "Roboto Mono", Menlo, Monaco, "Courier New", monospace;
 }
 code {
    background-color: transparent;
@@ -100,14 +100,14 @@ code {
 pre {
    display: block;
    margin: 0 0 14px;
-   padding: 10px 20px;
-   font-size: 15px;
+   padding: 10px 10px;
+   font-size: 12pt;
    line-height: 1.4;
    white-space: pre;
    white-space: pre-wrap;
    word-break: break-all;
    word-wrap: break-word;
-   background-color: #eee;
+   background-color: #dddddd;
 }
 pre code {
    padding: 0;
@@ -117,7 +117,6 @@ pre code {
 }
 .highlight {
    margin-bottom: 15px;
-   border-radius: 4px;
 }
 .highlight pre {
    margin-bottom: 0;
