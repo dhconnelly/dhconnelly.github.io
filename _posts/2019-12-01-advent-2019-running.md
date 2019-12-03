@@ -294,6 +294,11 @@ func toPath(vecPath []vec) []coord {
 
 ```
 
+**Edit**: Somebody on the
+[subreddit](https://www.reddit.com/r/adventofcode/comments/e5bz2w/2019_day_3_solutions/f9iz68s/?utm_source=share&utm_medium=ios_app&utm_name=iossmf)
+used a map of direction character to x and y diffs, which
+reduces the lines of code by quite a bit.
+
 Finding intersecting points and choosing the one that's closest to the
 starting point (i.e. closest to 0,0) isn't bad. I initially wasted time and
 lines of code on handling more than two wires, since I wasn't sure what would
