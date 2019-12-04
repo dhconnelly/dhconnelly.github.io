@@ -471,3 +471,23 @@ func valid(p [6]byte) (bool, bool) {
 
 Full code is on
 [GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day3/day4.go).
+
+Lots of people on
+[Reddit](https://www.reddit.com/r/adventofcode/comments/e5u5fv/2019_day_4_solutions/)
+used either a regular expression or sorting+sets for validation. My validation
+algorithm is O(n) in the length of the password, whereas sorting a string and
+setifying it for each candidate is O(n log n). For small inputs this doesn't
+matter, of course, and doing something clever produces much shorter code than
+mine: mine takes 18 lines to validate. The regex idea is interesting but
+produces nontrivial regexes with lots of captures, and I personally avoid
+writing nontrivial regexes since they can be pretty opaque.
+
+I have to say, looking at all the Python solutions makes me jealous of Python
+for this kind of problem-solving. I find it hard to imagine a readable Go
+implementation of any of these so far that's less than ~70 lines or so,
+whereas the Python implementations I see are pretty consistently ~10 lines or
+less. On the other hand, my Go solutions appear (to me, of course) very
+explicit and well-factored. This could be a result of the language forcing
+such a style, or it could be my lack of experience with code golfing and
+the impact of (too much? :) professional software development.
+
