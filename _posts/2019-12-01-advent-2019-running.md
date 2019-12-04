@@ -11,7 +11,7 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 
 ## Table of Contents
 
-[Day 1](#day-1) [Day 2](#day-2) [Day 3](#day-3)
+[Day 1](#day-1) [Day 2](#day-2) [Day 3](#day-3) [Day 4](#day-4)
 
 ## Day 1
 
@@ -381,3 +381,88 @@ math](https://github.com/dhconnelly/advent-of-code-2019/blob/master/ints/ints.go
 and the [intcode
 machine](https://github.com/dhconnelly/advent-of-code-2019/blob/master/intcode/intcode.go).
 Hopefully this will come in handy later :)
+
+
+## Day 4
+
+This was much more straightforward than the last two days. Loop over every
+number in the given range and test whether it's valid:
+
+```
+func countValidPasswords(from, to int) (int, int) {
+  numValid1, numValid2 := 0, 0
+  for i := from; i < to; i++ {
+    p := toPassword(i)
+    valid1, valid2 := valid(p)
+    if valid1 {
+      numValid1++
+    }
+    if valid2 {
+      numValid2++
+    }
+  }
+  return numValid1, numValid2
+}
+```
+
+We need access to the individual digits in order to check validity:
+
+```
+func toPassword(x int) [6]byte {
+  var p [6]byte
+  for i := 5; i >= 0; i-- {
+    p[i] = byte(x % 10)
+    x /= 10
+  }
+  return p
+}
+```
+
+For checking part 1 validity, we only need to look at one digit at a time and
+its neighbor to the right. We can stop immediately if we find a decreasing
+digit, and all we have to track is whether we've already seen a repeat.
+
+```
+func valid(p [6]byte) bool {
+  twoAdjacentSame := false
+  for i := 0; i < len(p)-1; i++ {
+    if p[i] > p[i+1] {
+      return false, false
+    }
+    if p[i] == p[i+1] {
+      twoAdjacentSame = true
+    }
+  }
+  return twoAdjacentSame
+}
+```
+
+Adding the part 2 condition that there's a repeating group of length *only*
+two means we need to keep track of the length of the current group in addition
+to tracking whether the condition has already been satisfied. Since we can
+only know if the repeating group is length 2 after exiting it, we have to
+check it in the loop as well as after exiting:
+
+```
+func valid(p [6]byte) (bool, bool) {
+  twoAdjacentSame, onlyTwoAdjacentSame := false, false
+  matchLen := 1
+  for i := 0; i < len(p)-1; i++ {
+    if p[i] > p[i+1] {
+      return false, false
+    }
+    if p[i] == p[i+1] {
+      twoAdjacentSame = true
+      matchLen++
+    } else if matchLen == 2 {
+      onlyTwoAdjacentSame = true
+    } else {
+      matchLen = 1
+    }
+  }
+  return twoAdjacentSame, onlyTwoAdjacentSame || matchLen == 2
+}
+```
+
+Full code is on
+[GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day3/day4.go).
