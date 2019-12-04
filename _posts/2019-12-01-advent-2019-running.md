@@ -373,3 +373,11 @@ func fastestIntersect(coords []coord, path1, path2 []coord) int {
 
 That's it! Full code is
 [here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day3/day3.go).
+
+**Edit**: I went back tonight and extracted libraries for [2d
+geometry](https://github.com/dhconnelly/advent-of-code-2019/blob/master/geom/point.go),
+[integer
+math](https://github.com/dhconnelly/advent-of-code-2019/blob/master/ints/ints.go),
+and the [intcode
+machine](https://github.com/dhconnelly/advent-of-code-2019/blob/master/intcode/intcode.go).
+Hopefully this will come in handy later :)
