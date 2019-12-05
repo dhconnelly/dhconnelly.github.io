@@ -12,6 +12,7 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 ## Table of Contents
 
 [Day 1](#day-1) [Day 2](#day-2) [Day 3](#day-3) [Day 4](#day-4)
+[Day 5](#day-5)
 
 ## Day 1
 
@@ -491,3 +492,210 @@ explicit and well-factored. This could be a result of the language forcing
 such a style, or it could be my lack of experience with code golfing and
 the impact of (too much? :) professional software development.
 
+
+## Day 5
+
+This is deeply satisfying:
+
+```
+day5 $ time ./day5 input.txt 1 5
+9025675
+11981754
+
+real    0m0.006s
+user    0m0.000s
+sys     0m0.006s
+```
+
+Today's problem involved extending the intcode computer from [Day 2](#day-2),
+but I just decided to write again from scratch. That code made certain
+assumptions that were violated by today's problem (particularly read modes and
+input/output), and I had a clear enough idea about how to proceed that I felt
+it would be faster to write from scratch than refactor. I'm keeping it as a
+post-AoC TODO to come back and unify all of the implementations.
+
+Reading the input is just a string split on commas and mapping `strconv.Atoi`,
+so I'll omit that and jump to instruction parsing. First, how to represent
+modes (unneccessary actually, could just store a byte) and instructions:
+
+```
+type mode int
+
+const (
+	POS mode = iota
+	IMM
+)
+
+type instr struct {
+	opcode int
+	params int
+	modes  []mode
+}
+```
+
+To parse an `instr`, we split the instruction integer into the opcode and
+modes parts using `i%100` and `i/100`, then pull off individual mode bits one
+at a time. This resembles the password validation from [Day 4](#day-4):
+
+```
+func parseInstr(i int) instr {
+	var in instr
+	in.opcode = i % 100
+	in.params = opcodeToParam[in.opcode]
+	for i /= 100; len(in.modes) < in.params; i /= 10 {
+		in.modes = append(in.modes, mode(i%10))
+	}
+	return in
+}
+```
+
+Notice how we handle the leading zeroes: since repeated division of zero is
+zero, which is indeed the desired mode for a dropped leading zero, we just
+keep pulling off leading zeroes for as many parameters are expected for the
+given opcode. We keep the number of parameters expected for each opcode in a
+map:
+
+```
+var opcodeToParam = map[int]int{
+	1: 3, 2: 3, 3: 1, 4: 1, 5: 2, 6: 2, 7: 3, 8: 3, 99: 0,
+}
+```
+
+So now we can parse an instruction from an integer in the data. Before
+proceeding to execution, let's talk about retrieving opcode arguments now that
+we have two parameter modes (immediate and position). I extracted lookup into
+a function that handles this so it doesn't further clutter the execution
+logic:
+
+```
+func get(data []int, i int, m mode) int {
+	v := data[i]
+	switch m {
+	case POS:
+		return data[v]
+	case IMM:
+		return v
+	}
+	log.Fatalf("unknown mode: %d", m)
+	return 0
+}
+```
+
+Pretty straightforward. This is used during program execution, implemented
+again (as in day 2) using a loop and a switch over opcodes. Getting pretty
+long now; if we keep adding opcodes, it it would be worth generalizing a bit.
+
+Let's look at the code first, and then I'll explain a bit more.
+
+```
+func run(data []int, in <-chan int, out chan<- int) {
+	for i := 0; i < len(data); {
+		instr := parseInstr(data[i])
+		switch instr.opcode {
+		case 1:
+			l := get(data, i+1, instr.modes[0])
+			r := get(data, i+2, instr.modes[1])
+			s := data[i+3]
+			data[s] = l + r
+			i += instr.params + 1
+		case 2:
+			l := get(data, i+1, instr.modes[0])
+			r := get(data, i+2, instr.modes[1])
+			s := data[i+3]
+			data[s] = l * r
+			i += instr.params + 1
+		case 3:
+			s := data[i+1]
+			data[s] = <-in
+			i += instr.params + 1
+		case 4:
+			v := get(data, i+1, instr.modes[0])
+			out <- v
+			i += instr.params + 1
+		case 5:
+			l := get(data, i+1, instr.modes[0])
+			r := get(data, i+2, instr.modes[1])
+			if l != 0 {
+				i = r
+			} else {
+				i += instr.params + 1
+			}
+		case 6:
+			l := get(data, i+1, instr.modes[0])
+			r := get(data, i+2, instr.modes[1])
+			if l == 0 {
+				i = r
+			} else {
+				i += instr.params + 1
+			}
+		case 7:
+			l := get(data, i+1, instr.modes[0])
+			r := get(data, i+2, instr.modes[1])
+			s := data[i+3]
+			if l < r {
+				data[s] = 1
+			} else {
+				data[s] = 0
+			}
+			i += instr.params + 1
+		case 8:
+			l := get(data, i+1, instr.modes[0])
+			r := get(data, i+2, instr.modes[1])
+			s := data[i+3]
+			if l == r {
+				data[s] = 1
+			} else {
+				data[s] = 0
+			}
+			i += instr.params + 1
+		case 99:
+			close(out)
+			return
+		}
+	}
+}
+```
+
+The logic for opcodes 1 and 2 is the same as in day 2. For input/output in
+opcodes 3 and 4 I used channels: the machine takes a read-only channel for
+getting input and a write-only channel for emitting output. This completely
+abstracts the implementation details from the program execution logic. 
+
+For part 2, the opcode 5 and 6 logic for jumping is relatively straightforward
+(retrieve the arguments, compare, then update the program counter
+appropriately), and the opcode 7 and 8 compare-and-store logic is similar to
+opcodes 1 and 2.
+
+Running the machine now requires copying the input data, setting up the
+channels, and starting execution in a goroutine. We go ahead and send the
+single input value on a buffered channel so it doesn't block, then read and
+discard all output values until the last one, which is returned as the final
+result.
+
+```
+func execute(data []int, input int) int {
+	data = copied(data)
+	in, out := make(chan int, 1), make(chan int)
+	in <- input
+	go run(data, in, out)
+	var o int
+	for o = range out {
+	}
+	close(in)
+	return o
+}
+```
+
+During debugging it was useful to print the outputs, and a nicer
+implementation of the machine would support this with a flag, but I removed
+the logging when I had the answers to both parts.
+
+Full code is
+[here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day5/day5.go).
+
+Now that we have branching and jumping, the machine should now be [Turing
+complete](https://en.wikipedia.org/wiki/Turing_completeness), i.e. it should
+be able to do anything that any given programming language can do. In
+particular, one could write a C compiler (or Go, or Haskell, etc) that emits
+this intcode to be executed by our machine. I'm sure someone on Reddit will do
+this in the coming days and weeks :)
