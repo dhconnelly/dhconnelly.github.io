@@ -706,11 +706,11 @@ this in the coming days and weeks :)
 
 # Day 6
 
-This was my quickest puzzle so far, about 40 minutes to both answers. So far
-it's taken me about 1:20 or so to finish each day, regardless of difficulty,
-of which I think a large part is reading data and building the right data
-structures. This required only one data structure, though, and parsing it was
-simple -- not even any `strconv.Atoi` today.
+This was my quickest puzzle since day 1, about 40 minutes to both answers. So
+far it's taken me between an hour and 1:20 or so to finish each day,
+regardless of difficulty, of which I think a large part is reading data and
+building the right data structures. This required only one data structure,
+though, and parsing it was simple -- not even any `strconv.Atoi` today.
 
 ```
 type orbit struct {
