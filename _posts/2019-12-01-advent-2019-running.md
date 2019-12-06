@@ -12,7 +12,7 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 ## Table of Contents
 
 [Day 1](#day-1) [Day 2](#day-2) [Day 3](#day-3) [Day 4](#day-4)
-[Day 5](#day-5)
+[Day 5](#day-5) [Day 6](#day-6)
 
 ## Day 1
 
@@ -700,4 +700,106 @@ particular, one could write a C compiler (or Go, or Haskell, etc) that emits
 this intcode to be executed by our machine. I'm sure someone on Reddit will do
 this in the coming days and weeks :)
 
-**Edit**: It took less than one day: [Intscript](https://www.reddit.com/r/adventofcode/comments/e6q9f6/2019_day_5_intscript_a_tiny_language_that/)
+**Edit**: It took less than one day:
+[Intscript](https://www.reddit.com/r/adventofcode/comments/e6q9f6/2019_day_5_intscript_a_tiny_language_that/)
+
+
+# Day 6
+
+This was my quickest puzzle so far, about 40 minutes to both answers. So far
+it's taken me about 1:20 or so to finish each day, regardless of difficulty,
+of which I think a large part is reading data and building the right data
+structures. This required only one data structure, though, and parsing it was
+simple -- not even any `strconv.Atoi` today.
+
+```
+type orbit struct {
+  orbiter, orbited string
+}
+```
+
+Both problems needed a graph representation to store links between orbiter and
+orbited. Using a real graph might have had some nice properties, but I used a
+map since it's so easy to look up and iterate, whereas finding or writing a
+real graph structure would have required either learning its API or building
+one. This is one nice property of using a standard library / built-in language
+features over dependencies: usage patterns are the ones you already know.
+
+```
+func orbitMap(orbits []orbit) map[string]string {
+  m := make(map[string]string)
+  for _, o := range orbits {
+    m[o.orbiter] = o.orbited
+  }
+  return m
+}
+```
+
+To count orbits for any object `k`, we need to count orbits for the object it
+is orbiting `v`, and so on recursively until reaching an object that orbits
+nothing. I used iteration here instead of explicit recursion, again because
+it's so straightforward with a for loop over the map:
+
+```
+func chain(k string, m map[string]string) []string {
+  var chain []string
+  for v, ok := m[k]; ok; v, ok = m[v] {
+    chain = append(chain, v)
+  }
+  return chain
+}
+
+func countOrbits(orbits map[string]string) int {
+  n := 0
+  for k, _ := range orbits {
+    n += len(chain(k, orbits))
+  }
+  return n
+}
+```
+
+So we look at each orbit, find the chain of all indirectly orbited objects,
+and sum up the chain lengths.
+
+For part 2, we want to find the orbit chains for `YOU` and `SAN`, find the
+object `o` that is closest to both of them, and return the sum of the distance
+from each of `YOU` and `SAN` to `o`:
+
+```
+func closestAncestor(chain1, chain2 []string) (string, int, int) {
+  m := make(map[string]int)
+  for i, k := range chain1 {
+    m[k] = i
+  }
+  for i, o := range chain2 {
+    if j, ok := m[o]; ok {
+      return o, i, j
+    }
+  }
+  return "", 0, 0
+}
+```
+
+First we dump all of the first chain in a map to keep track of the distances
+for each object in it, then look at the second chain and find the first object
+that's in the map. That's the closest ancestor, and we return its index in the
+chain as the second distance and its value in the map as the first distance.
+
+This works because the chains are sorted by distance from the starting object
+(see the function `chain` above), so the first object that we visit in the
+second chain that's in the first one will always be closest than any other
+ancestor: any closer ancestor for the second chain would have been visited
+earlier in the loop over the second chain.
+
+The number of required transfers is just the sum of these two distances:
+
+```
+func transfers(orbits map[string]string, from, to string) int {
+  fromChain, toChain := chain(from, orbits), chain(to, orbits)
+  _, dist1, dist2 := closestAncestor(fromChain, toChain)
+  return dist1 + dist2
+}
+```
+
+That's it! Code is on
+[GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day6/day6.go).
