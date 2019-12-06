@@ -699,3 +699,5 @@ be able to do anything that any given programming language can do. In
 particular, one could write a C compiler (or Go, or Haskell, etc) that emits
 this intcode to be executed by our machine. I'm sure someone on Reddit will do
 this in the coming days and weeks :)
+
+**Edit**: It took less than one day: [Intscript](https://www.reddit.com/r/adventofcode/comments/e6q9f6/2019_day_5_intscript_a_tiny_language_that/)
