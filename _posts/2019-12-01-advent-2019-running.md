@@ -758,6 +758,10 @@ func countOrbits(orbits map[string]string) int {
 }
 ```
 
+(Note that we could cache the transitive chains as we build them, instead of
+visiting the entire chain for each object. See: [dynamic
+programming](https://en.wikipedia.org/wiki/Dynamic_programming#Computer_programming))
+
 So we look at each orbit, find the chain of all indirectly orbited objects,
 and sum up the chain lengths.
 
