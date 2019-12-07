@@ -976,3 +976,38 @@ really makes it easy to hook the machines together and run them concurrently.
 All of the actual intcode machine logic is identical to [Day 5](#day-5). Full
 code is on
 [GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day7/day7.go).
+
+**Edit**: I came back and replaced the terrible, complex channel-based
+generation algorithm with a simple recursive one that builds a straightforward
+slice of the sequences. Here it is:
+
+{% raw %}
+```
+func genSeqsRec(nums []int, used map[int]bool, until int) []seq {
+  if until == 0 {
+    return []seq{{}}
+  }
+  var seqs []seq
+  for _, num := range nums {
+    if !used[num] {
+      used[num] = true
+      for _, recSeq := range genSeqsRec(nums, used, until-1) {
+        recSeq[until-1] = num
+        seqs = append(seqs, recSeq)
+      }
+      used[num] = false
+    }
+  }
+  return seqs
+}
+
+func genSeqs(nums []int) []seq {
+  return genSeqsRec(nums, make(map[int]bool), len(nums))
+}
+```
+{% endraw %}
+
+Essentially, we choose a phase setting and mark it unavailable, then generate
+all phases sequences of length n-1 without the phase we removed, then add the
+one we removed to the end of all the recursively-generated sequences. Should
+have started there, but got a bit channel-ambitious :)
