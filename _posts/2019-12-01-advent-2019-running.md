@@ -1009,5 +1009,6 @@ func genSeqs(nums []int) []seq {
 
 Essentially, we choose a phase setting and mark it unavailable, then generate
 all phases sequences of length n-1 without the phase we removed, then add the
-one we removed to the end of all the recursively-generated sequences. Should
-have started there, but got a bit channel-ambitious :)
+one we removed to the end of all the recursively-generated sequences. We do
+this for each phase setting. Should have started there, but got a bit
+channel-ambitious :)
