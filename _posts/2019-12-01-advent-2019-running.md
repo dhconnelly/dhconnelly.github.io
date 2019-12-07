@@ -12,7 +12,7 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 ## Table of Contents
 
 [Day 1](#day-1) [Day 2](#day-2) [Day 3](#day-3) [Day 4](#day-4)
-[Day 5](#day-5) [Day 6](#day-6)
+[Day 5](#day-5) [Day 6](#day-6) [Day 7](#day-7)
 
 ## Day 1
 
@@ -807,3 +807,172 @@ func transfers(orbits map[string]string, from, to string) int {
 
 That's it! Code is on
 [GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day6/day6.go).
+
+
+## Day 7
+
+Well, today I wasted half an hour on how to generate permutations. I misread
+and started by generating with replacement (i.e. 44444 is valid), and then,
+since this produced signals that didn't match the examples, I spent a while
+trying to debug the execution logic. Anyway, after adapting the code to
+properly generate without replacement, I couldn't figure out how to detect
+that all permutations had been generated and the output channel could be
+closed. Eventually I gave up and closed it manually after n! values had been
+produced. This could surely be much cleaner. I look forward to reading the
+soultions where they produce all of these in a single line of Python...
+
+```
+func fact(n int) int {
+  if n < 1 {
+    return 1
+  }
+  return n * fact(n-1)
+}
+
+func genSeq(s *seq, i int, avail map[int]bool, out chan<- seq) {
+  if i >= 5 {
+    out <- *s
+    return
+  }
+  for phase, free := range avail {
+    if free {
+      avail[phase] = false
+      s[i] = phase
+      genSeq(s, i+1, avail, out)
+      avail[phase] = true
+    }
+  }
+}
+
+func genSeqs(phases []int) chan seq {
+  out := make(chan seq)
+  var s seq
+  go func() {
+    ch := make(chan seq)
+    avail := availMap(phases)
+    go genSeq(&s, 0, avail, ch)
+    for i := 0; i < fact(len(s)); i++ {
+      s := <-ch
+      out <- s
+    }
+    close(out)
+  }()
+  return out
+}
+```
+
+Essentially, to generate sequences of length n, we choose a number that's not
+already been used (tracked in a `map[int]bool`), generate sequences of length
+n-1, and use recursion. We return the values in a channel because I wanted to
+be able to do `for seq := range genSeqs()`. I think this would be much cleaner
+if I were to just generate one giant slice of all the permutations that could
+be modified recursively and returned. Anyway, lots of channel usage in this
+problem, which was new for me -- I've not really used them much until now.
+
+For machine execution, I adapted the input/output so that each execution
+takes and returns a channel. Then we can send and receive an arbitrary number
+of signals, which helps in part 2. The only trickiness is appending the phase
+setting to the front of the input channel.
+
+```
+func execute(data []int, phase int, signals <-chan int) chan int {
+  data = copied(data)
+  in, out := make(chan int), make(chan int)
+  go func() {
+    in <- phase
+    for signal := range signals {
+      in <- signal
+    }
+    close(in)
+  }()
+  go run(data, in, out)
+  return out
+}
+```
+
+Now we can execute with a given phase sequence by kicking off the five
+amplifiers by using the output value from one amplifier as the input to the
+next amplifier. The output from the final amplifier's output channel is the
+generated signal.
+
+```
+func executeSeq(data []int, s seq) int {
+  out := 0
+  for _, phase := range s {
+    in := make(chan int, 1)
+    in <- out
+    close(in)
+    out = <-execute(data, phase, in)
+  }
+  return out
+}
+```
+
+To find the max signal, we iterate over all sequences using `genSeqs` and
+track the largest signal produced so far. This implementation takes the
+execution function as a parameter, which we need for part 2.
+
+```
+func maxSignal(data []int, exec func([]int, seq) int, nums []int) int {
+  max := 0
+  for seq := range genSeqs(nums) {
+    out := exec(data, seq)
+    if out > max {
+      max = out
+    }
+  }
+  return max
+}
+```
+
+Okay, so part 2 requires looping the inputs and outputs. This is pretty
+straightforward using our channel mechanism: instead of piping the single
+output value produced by each amplifier into the next one, we send the entire
+output channel from one amplifier as the input channel to the next one. Then,
+instead of returning the first value produced by the final amplifier, we
+save a copy of it and pipe it back into the first amplifier until the channel
+is closed (which happens when the final amplifier halts). The last output
+value we saw is the signal.
+
+```
+func executeWithFeedback(data []int, s seq) int {
+  // send the initial input
+  in := make(chan int, 1)
+  in <- 0
+
+  // pipe the amplifiers together
+  out := in
+  for _, phase := range s {
+    out = execute(data, phase, out)
+  }
+
+  // pipe the output back into the input, but keep track of it
+  var o int
+  for o = range out {
+    in <- o
+  }
+
+  // last output is the output signal
+  return o
+}
+```
+
+This function is used for a second call to `maxSignal` as defined above, since
+the looping over sequences and tracking max signal logic is identical.
+
+```
+func main() {
+  data := read(os.Args[1])
+  fmt.Println(maxSignal(data, executeSeq, []int{0, 1, 2, 3, 4}))
+  fmt.Println(maxSignal(data, executeWithFeedback, []int{5, 6, 7, 8, 9}))
+}
+```
+
+This one was pretty difficult, although I think if I had more experience with
+channels (and hadn't misread the sequence requirements) it would have been
+much more straightforward, because using channels for the input and output
+really makes it easy to hook the machines together and run them concurrently.
+
+All of the actual intcode machine logic is identical to [Day 5](#day-5). Full
+code is on
+[GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day7/day7.go).
