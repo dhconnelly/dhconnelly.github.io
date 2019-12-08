@@ -1082,10 +1082,13 @@ func checksum(img image) int {
 
 This is just so much code. Some of it could be reduced by inlining the switch
 statement into the checksum for-loop and including the zeroes in it, but we're
-still talking about like thirtyish lines of code at a minimum.
+still talking about like twenty-ish lines of code at a minimum.
 
 Anyway, enough whining, because yesterday's problem showed how Go can make
-hard problems easy.
+hard problems easy: from reading the subreddit it's clear that a lot of
+people had trouble with running several copies of the intcode machine and
+connecting them together, while for me this was an almost-trivial change
+using channels and goroutines.
 
 To decode the image, we can start at the bottom layer and move upwards, always
 replacing a pixel if it's non-transpartent:
