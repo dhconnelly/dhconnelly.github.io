@@ -12,7 +12,7 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 ## Table of Contents
 
 [Day 1](#day-1) [Day 2](#day-2) [Day 3](#day-3) [Day 4](#day-4)
-[Day 5](#day-5) [Day 6](#day-6) [Day 7](#day-7)
+[Day 5](#day-5) [Day 6](#day-6) [Day 7](#day-7) [Day 8](#day-8)
 
 ## Day 1
 
@@ -1012,3 +1012,120 @@ all phases sequences of length n-1 without the phase we removed, then add the
 one we removed to the end of all the recursively-generated sequences. We do
 this for each phase setting. Should have started there, but got a bit
 channel-ambitious :)
+
+
+## Day 8
+
+A nice and easy one today, even though I spent way too much time on reading
+and parsing the input, just like every day. These problems are great practice
+for this, though. One thing I want to do is actually move away from using
+`ioutil.ReadFile` and do proper scanning, which today I started to do again
+before realizing I was spending a lot of time on it. In retrospect, who
+cares? Well, for one, my daughter, who is awake and I'll need to get out of
+her crib in fourteen minutes. Maybe I can come back to it later and refactor
+to using byte scanning. At some point I'll have to actually spend the time,
+otherwise I'll always be more comfortable with manipulating the entire thing
+in memory.
+
+Anyway, we first read in the pixel data layer-by-layer into an image
+structure:
+
+```
+type image struct {
+  width, height int
+  layers        [][]byte
+}
+```
+
+To compute the "checksum", we iterate over the layers, find the one that has
+the fewest zeroes, and multiply the number of ones and twos together. Here's
+a place where Go is just depressingly overboard-verbose.
+
+```
+func zeroes(pixels []byte) int {
+  n := 0
+  for _, p := range pixels {
+    if p == 0 {
+      n++
+    }
+  }
+  return n
+}
+
+func layerChecksum(pixels []byte) int {
+  ones, twos := 0, 0
+  for _, p := range pixels {
+    switch p {
+    case 1:
+      ones++
+    case 2:
+      twos++
+    }
+  }
+  return ones * twos
+}
+
+func checksum(img image) int {
+  fewestLayer := img.layers[0]
+  fewestZeroes := zeroes(fewestLayer)
+  x := layerChecksum(fewestLayer)
+  for _, layer := range img.layers[1:] {
+    if z := zeroes(layer); z < fewestZeroes {
+      fewestZeroes = z
+      fewestLayer = layer
+      x = layerChecksum(layer)
+    }
+  }
+  return x
+}
+```
+
+This is just so much code. Some of it could be reduced by inlining the switch
+statement into the checksum for-loop and including the zeroes in it, but we're
+still talking about like thirtyish lines of code at a minimum.
+
+Anyway, enough whining, because yesterday's problem showed how Go can make
+hard problems easy.
+
+To decode the image, we can start at the bottom layer and move upwards, always
+replacing a pixel if it's non-transpartent:
+
+```
+func apply(base, layer []byte) {
+  for i := 0; i < len(base); i++ {
+    if layerPix := layer[i]; layerPix != 2 {
+      base[i] = layerPix
+    }
+  }
+}
+
+func decode(img image) []byte {
+  b := make([]byte, img.width*img.height)
+  for i := len(img.layers) - 1; i >= 0; i-- {
+    apply(b, img.layers[i])
+  }
+  return b
+}
+```
+
+Now we just need to print it:
+
+```
+func printImage(b []byte, width, height int) {
+  for i := 0; i < height; i++ {
+    for j := 0; j < width; j++ {
+      pix := b[i*width+j]
+      if pix == 0 {
+        fmt.Printf(" ")
+      } else {
+        fmt.Printf("%d", b[i*width+j])
+      }
+    }
+    fmt.Println()
+  }
+}
+```
+
+That's it. Code is on
+[GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day8/day8.go)
+as usual :)
