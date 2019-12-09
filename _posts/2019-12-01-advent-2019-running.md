@@ -1259,7 +1259,7 @@ func (m *machine) run() {
 ```
 
 The full code for the extracted intcode machine is on
-[GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/intcode/intcode.go).
+[GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/intcode).
 The package's public interface is:
 
 ```
@@ -1355,5 +1355,7 @@ and moved updating it into the opcode handlers, which makes it easier to
 inspect the machine state (in case we need -- or I want -- to do some sort of
 single-instruction stepping or debugging.
 
-Full code is on
-[GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/intcode/intcode.go).
+Full code for the updated intcode machine is on
+[GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/intcode),
+as is the [Day 9-specific
+code](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day9/day9.go)
