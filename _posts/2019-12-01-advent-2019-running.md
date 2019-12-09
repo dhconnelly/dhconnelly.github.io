@@ -11,8 +11,9 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 
 ## Table of Contents
 
-[Day 1](#day-1) [Day 2](#day-2) [Day 3](#day-3) [Day 4](#day-4)
-[Day 5](#day-5) [Day 6](#day-6) [Day 7](#day-7) [Day 8](#day-8)
+[[Day 1]](#day-1) [[Day 2]](#day-2) [[Day 3]](#day-3) [[Day 4]](#day-4)
+[[Day 5]](#day-5) [[Day 6]](#day-6) [[Day 7]](#day-7) [[Day 8]](#day-8)
+[[intcode refactoring]](#intcode-refactoring) [[Day 9]](#day-9)
 
 ## Day 1
 
@@ -1129,3 +1130,170 @@ func printImage(b []byte, width, height int) {
 That's it. Code is on
 [GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day8/day8.go)
 as usual :)
+
+
+## Intcode refactoring
+
+On Sunday night I decided to refactor my intcode implementation, which paid
+off the next day. Let me go over what I did a bit before getting to the day 9
+changes.
+
+To begin with, I extracted machine state into a struct:
+
+```
+type machine struct {
+  data []int
+  in   <-chan int
+  out  chan<- int
+}
+
+func newMachine(data []int, in <-chan int, out chan<- int) *machine {
+  m := &machine{0, make([]data, len(data)), in, out}
+  copy(m.data, data)
+  return m
+}
+```
+
+I also extracted get/set/read/write into methods:
+
+```
+func (m *machine) get(i int, md mode) int {
+  v := m.data[i]
+  switch md {
+  case pos:
+    return m.data[v]
+  case imm:
+    return v
+  case rel:
+    return m.data[v+m.relbase]
+  }
+  log.Fatalf("unknown mode: %d", md)
+  return 0
+}
+
+func (m *machine) set(i, x int, md mode) {
+  switch md {
+  case pos:
+    m.data[i] = x
+  case rel:
+    m.data[i+m.relbase] = x
+  default:
+    log.Fatalf("bad mode for write: %d", md)
+  }
+}
+
+func (m *machine) read() int {
+  return <-m.in
+}
+
+func (m *machine) write(x int) {
+  m.out <- x
+}
+```
+
+Then I defined enums for the opcodes:
+
+```
+type opcode int
+
+const (
+  add    opcode = 1
+  mul           = 2
+  read          = 3
+  print         = 4
+  jmpif         = 5
+  jmpnot        = 6
+  lt            = 7
+  eq            = 8
+  halt          = 99
+)
+```
+
+This makes it easier to read the code and to refer to them in the arity map,
+for example, and in the new handler map: I also moved opcode implementations
+  out of the giant for-switch and into a map of handlers. For example:
+
+```
+type handler func(m *machine, pc int, instr instruction) (int, bool)
+
+var handlers = map[opcode]handler{
+  add: func(m *machine, pc int, instr instruction) (int, bool) {
+    l := m.get(pc+1, instr.modes[0])
+    r := m.get(pc+2, instr.modes[1])
+    s := m.data[pc+3]
+    m.set(s, l+r, instr.modes[2])
+    return pc + instr.arity + 1, true
+  },
+}
+```
+
+The handler returns the updated program counter and a boolean indicating
+whether the machine should continue running. So HALT is just:
+
+```
+halt: func(m *machine, pc int, instr instruction) (int, bool) {
+  return 0, false
+},
+  ```
+
+This simplifies the core execution logic, which now just adjusts the program
+counter and invokes opcode handlers.
+
+```
+func (m *machine) run() {
+  for pc, ok := 0, true; ok; {
+    instr := parseInstruction(m.data[pc])
+    if h, present := handlers[instr.op]; present {
+      pc, ok = h(m, pc, instr)
+    } else {
+      log.Fatalf("bad instr at pos %d: %v", pc, instr)
+    }
+    if !ok {
+      close(m.out)
+    }
+  }
+}
+```
+
+The full code for the extracted intcode machine is on
+[GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/intcode/intcode.go).
+The package's public interface is:
+
+```
+$ go doc github.com/dhconnelly/advent-of-code-2019/intcode
+
+package intcode // import "github.com/dhconnelly/advent-of-code-2019/intcode"
+
+func ReadProgram(path string) ([]int, error)
+func RunProgram(data []int, in <-chan int) <-chan int
+```
+
+
+## Day 9
+
+Okay, so now we've finished implementing the intcode computer. I suspect we're
+not done *using* it, but okay :) Today's problem was not bad for me:
+
+- Support for large numbers just worked with no changes. Go's `int` type is
+  machine-defined, though, so this may not work on a 32-bit machine, which
+  would require switching to explicit int64 types.
+
+- To support memory beyond the program, I initially started to add slice
+  expansion logic into the machine's `get` and `set` methods. It then occurred
+  to me that I could just use a `map[int]int` for memory instead of a slice. I
+  looked through the usages of the data slice, decided that none of them
+  required actual slice semantics (i.e. no appends and no explicit dependency
+  on ordering or contiguous data), then simply switched to a map. This worked
+  perfectly with no problems.
+
+- Adding relative mode support involved adding a field to the `machine` struct
+  and updating `get` and `set` to support that mode.`
+
+This took me about a half an hour and produced correct answers to the examples
+as well as both parts of the problem on the first try. I'm glad we didn't have
+to implement all of this in a single day, and I'm also glad that it was spread
+over several days so that I was able to think about the implementation and
+possible improvements over the entire week. Even when it seems straightforward
+to write a program, the right structure is usually not clear at the beginning.
+It takes rewriting and thinking about it offline and talking about it and so
+on before the right structure starts to appear.
