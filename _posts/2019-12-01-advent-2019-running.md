@@ -1334,3 +1334,16 @@ possible improvements over the entire week. Even when it seems straightforward
 to write a program, the right structure is usually not clear at the beginning.
 It takes rewriting and thinking about it offline and talking about it and so
 on before the right structure starts to appear.
+
+Quick stats, since I was surprised that it didn't take my Chromebook longer
+to run, given the warning that it may take a few seconds:
+
+```
+day9 $ time ./day9 input.txt 1 2
+2494485073
+44997
+
+real    0m0.110s
+user    0m0.103s
+sys     0m0.016s
+```
