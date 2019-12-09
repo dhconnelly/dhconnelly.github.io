@@ -14,6 +14,7 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 [[Day 1]](#day-1) [[Day 2]](#day-2) [[Day 3]](#day-3) [[Day 4]](#day-4)
 [[Day 5]](#day-5) [[Day 6]](#day-6) [[Day 7]](#day-7) [[Day 8]](#day-8)
 [[intcode refactoring]](#intcode-refactoring) [[Day 9]](#day-9)
+[[Day 10]](#day-10)
 
 ## Day 1
 
@@ -1347,3 +1348,13 @@ real    0m0.110s
 user    0m0.103s
 sys     0m0.016s
 ```
+
+**Edit**: I came back and made a couple of small changes: first I switched to
+explicit int64 types in the machine, so that big number handling isn't
+machine-specific, and then I moved the program counter into the machine state
+and moved updating it into the opcode handlers, which makes it easier to
+inspect the machine state (in case we need -- or I want -- to do some sort of
+single-instruction stepping or debugging.
+
+Full code is on
+[GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/intcode/intcode.go).
