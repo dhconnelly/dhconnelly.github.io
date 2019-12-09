@@ -1290,7 +1290,41 @@ not done *using* it, but okay :) Today's problem was not bad for me:
   perfectly with no problems.
 
 - Adding relative mode support involved adding a field to the `machine` struct
-  and updating `get` and `set` to support that mode.`
+  and updating `get` and `set` to support that mode.
+
+```
+func (m *machine) get(i int, md mode) int {
+  v := m.data[i]
+  switch md {
+  /* snip */
+  case rel:
+    return m.data[v+m.relbase]
+  }
+  log.Fatalf("unknown mode: %d", md)
+  return 0
+}
+
+func (m *machine) set(i, x int, md mode) {
+  switch md {
+  /* snip */
+  case rel:
+    m.data[i+m.relbase] = x
+  default:
+    log.Fatalf("bad mode for write: %d", md)
+  }
+}
+
+var handlers = map[opcode]handler{
+  /* snip */
+  adjrel: func(m *machine, pc int, instr instruction) (int, bool) {
+    v := m.get(pc+1, instr.modes[0])
+    m.relbase += v
+    return pc + instr.arity + 1, true
+  },
+  /* snip */
+}
+```
+
 
 This took me about a half an hour and produced correct answers to the examples
 as well as both parts of the problem on the first try. I'm glad we didn't have
