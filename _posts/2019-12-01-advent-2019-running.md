@@ -14,6 +14,7 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 [[Day 1]](#day-1) [[Day 2]](#day-2) [[Day 3]](#day-3) [[Day 4]](#day-4)
 [[Day 5]](#day-5) [[Day 6]](#day-6) [[Day 7]](#day-7) [[Day 8]](#day-8)
 [[intcode refactoring]](#intcode-refactoring) [[Day 9]](#day-9)
+[[intcode refactoring round 2]](#intcode-refactoring-round-2)
 [[Day 10]](#day-10)
 
 ## Day 1
@@ -1361,10 +1362,13 @@ Full code for the updated intcode machine is on
 as is the [Day 9-specific
 code](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day9/day9.go)
 
-**Edit #2**: After talking with a colleague it was clear that the parameter
-modes for writes can be tricky. My implementation works but is inconsistent in
-what arguments should be provided to `get` and `set`, so I've refactored a bit
-and added some comments. This affects
+
+## Intcode refactoring round 2
+
+After talking with a colleague it was clear that the parameter modes for
+writes can be tricky. My implementation works but is inconsistent in what
+arguments should be provided to `get` and `set`, so I've refactored a bit and
+added some comments. This affects
 [machine.go](https://github.com/dhconnelly/advent-of-code-2019/blob/master/intcode/machine.go)
 as well as its callers in
 [opcodes.go](https://github.com/dhconnelly/advent-of-code-2019/blob/master/intcode/opcodes.go):
@@ -1383,17 +1387,17 @@ as well as its callers in
 //   address is returned.
 //
 func (m *machine) get(addr int64, md mode) int64 {
-	v := m.data[addr]
-	switch md {
-	case pos:
-		return m.data[v]
-	case imm:
-		return v
-	case rel:
-		return m.data[v+m.relbase]
-	}
-	log.Fatalf("unknown mode: %d", md)
-	return 0
+  v := m.data[addr]
+  switch md {
+  case pos:
+    return m.data[v]
+  case imm:
+    return v
+  case rel:
+    return m.data[v+m.relbase]
+  }
+  log.Fatalf("unknown mode: %d", md)
+  return 0
 }
 
 // Sets a value according to the specified mode.
@@ -1419,7 +1423,21 @@ func (m *machine) set(addr, val int64, md mode) {
 ```
 
 I think that's a bit clearer, but it changes the callers of `set` to provide
-the simple argument location instead of dereferencing it first.
+the simple argument location instead of dereferencing it first. For example:
+
+```
+var handlers = map[opcode]handler{
+  /* snip */`
+  mul: func(m *machine, instr instruction) bool {
+    l := m.get(m.pc+1, instr.modes[0])
+    r := m.get(m.pc+2, instr.modes[1])
+    m.set(m.pc+3, l*r, instr.modes[2])
+    m.pc += instr.arity + 1
+    return true
+  },
+  /* snip */`
+}
+```
 
 
 ## Day 10
@@ -1427,3 +1445,6 @@ the simple argument location instead of dereferencing it first.
 This took me three hours and I haven't had time to write up this post, but
 I'll go ahead and link to the [code on
 GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day10/day10.go).
+I also wrote a cleaned-up version that uses angles instead of precomputed
+integral diffs, which is
+[here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day10/day10_rf.go).
