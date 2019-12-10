@@ -1359,3 +1359,63 @@ Full code for the updated intcode machine is on
 [GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/intcode),
 as is the [Day 9-specific
 code](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day9/day9.go)
+
+**Edit #2**: After talking with a colleague it was clear that the parameter
+modes for writes can be tricky. My implementation works but is inconsistent in
+what arguments should be provided to `get` and `set`, so I've refactored a bit
+and added some comments. This affects
+[machine.go](https://github.com/dhconnelly/advent-of-code-2019/blob/master/intcode/machine.go)
+as well as its callers in
+[opcodes.go](https://github.com/dhconnelly/advent-of-code-2019/blob/master/intcode/opcodes.go):
+
+```
+// Retrieves a value according to the specified mode.
+//
+// * In immediate mode, returns the value stored at the given address.
+//
+// * In position mode, the value stored at the address is interpreted
+//   as a *pointer* to the value that should be returned.
+//
+// * In relative mode, the machine's current relative base is interpreted
+//   as a pointer, and the value stored at the address is interpreted
+//   as an offset to that pointer. The value stored at the *resulting*
+//   address is returned.
+//
+func (m *machine) get(addr int64, md mode) int64 {
+	v := m.data[addr]
+	switch md {
+	case pos:
+		return m.data[v]
+	case imm:
+		return v
+	case rel:
+		return m.data[v+m.relbase]
+	}
+	log.Fatalf("unknown mode: %d", md)
+	return 0
+}
+
+// Sets a value according to the specified mode.
+//
+// * In position mode, the value stored at the given address specifies
+//   the address to which the value should be written.
+//
+// * In relative mode, the value stored at the given address specifies
+//   an offset to the relative base, and the sum of the offset and the
+//   base specifies the address to which the value should be written.
+//
+func (m *machine) set(addr, val int64, md mode) {
+  v := m.data[addr]
+  switch md {
+  case pos:
+    m.data[v] = val
+  case rel:
+    m.data[v+m.relbase] = val
+  default:
+    log.Fatalf("bad mode for write: %d", md)
+  }
+}
+```
+
+I think that's a bit clearer, but it changes the callers of `set` to provide
+the simple argument location instead of dereferencing it first.
