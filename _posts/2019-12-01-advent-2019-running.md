@@ -15,7 +15,7 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 [[Day 5]](#day-5) [[Day 6]](#day-6) [[Day 7]](#day-7) [[Day 8]](#day-8)
 [[intcode refactoring]](#intcode-refactoring) [[Day 9]](#day-9)
 [[intcode refactoring round 2]](#intcode-refactoring-round-2)
-[[Day 10]](#day-10)
+[[Day 10]](#day-10) [[Day 11]](#day-11)
 
 ## Day 1
 
@@ -1744,3 +1744,94 @@ with
 [after](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day10/day10_rf.go).
 
 I think today was revenge for finishing day 9 in just a half an hour :)
+
+
+## Day 11
+
+Using all three of my extracted libraries today (intcode, ints, and geom) to
+paint the tiles using the programmable robot. I started with some enums (not
+really necessary and it inflates the code quite a bit, but who cares :) I'll
+omit those here because they're clear below.
+
+The core of the solution is an I/O loop, providing the intcode machine with
+inputs according to the color of the tile it's on and reading the (color,
+direction) outputs until the channel is closed. I store the current colors in
+a `map[geom.Pt2]color` and the current position and orientation of the robot.
+
+```
+func run(data []int64, initial color) grid {
+  in := make(chan int64)
+  out := intcode.RunProgram(data, in)
+  g := grid(make(map[geom.Pt2]color))
+  p := geom.Zero2
+  g[p] = initial
+  o := UP
+loop:
+  for {
+    select {
+    case c, ok := <-out:
+      if !ok {
+        break loop
+      }
+      g[p] = color(c)
+      dir := direction(<-out)
+      o = turn(o, dir)
+      p = move(p, o)
+    case in <- int64(g[p]):
+    }
+  }
+  return g
+}
+```
+
+Channels are fun :)
+
+Okay, so for part 1 we just need the number of tiles that were painted:
+
+```
+func main() {
+  data, err := intcode.ReadProgram(os.Args[1])
+  if err != nil {
+    log.Fatal(err)
+  }
+  g := run(data, BLACK)
+  fmt.Println(len(g))
+}
+```
+
+Using the map makes this easy because it only contains values that were
+explicitly written. Note that we kick off the machine with the color that
+should be stored at position (0,0), where is the position we use for the
+robot's initial tile. For part 1 we use `BLACK`.
+
+For part 2 we kick it off with `WHITE` instead and print the resulting grid.
+This requires finding the bounds of the space explored by the robot, after
+which we can iterate over every position within those bounds and retrieve its
+color from the map we created above. Since Go maps return a zero value when a
+key isn't present, and the zero value for a color is `BLACK`, this is easy.
+
+```
+func printGrid(g grid) {
+  minX, minY := math.MaxInt64, math.MaxInt64
+  maxX, maxY := math.MinInt64, math.MinInt64
+  for p, _ := range g {
+    minX, maxX = ints.Min(minX, p.X), ints.Max(maxX, p.X)
+    minY, maxY = ints.Min(minY, p.Y), ints.Max(maxY, p.Y)
+  }
+  for row := maxY; row >= minY; row-- {
+    for col := minX; col <= maxX; col++ {
+      p := geom.Pt2{col, row}
+      switch g[p] {
+      case BLACK:
+        fmt.Print(" ")
+      case WHITE:
+        fmt.Print("X")
+      }
+    }
+    fmt.Println()
+  }
+}
+```
+
+That's it :) Code is on
+[GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day11/day11.go).
