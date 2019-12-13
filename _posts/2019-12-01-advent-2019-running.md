@@ -2243,11 +2243,11 @@ loop:
 ```
 
 That's the core of the game logic. Rendering the various tiles uses some maps
-with predetermined styles and characters:
+with predetermined characters:
 
 ```
 func draw(screen tcell.Screen, x, y int, tile TileId) {
-  screen.SetContent(x, y, tileToRune[tile], nil, tileToStyle[tile])
+  screen.SetContent(x, y, tileToRune[tile], nil, 0)
   screen.Show()
 }
 
@@ -2257,16 +2257,6 @@ var tileToRune = map[TileId]rune{
   BLOCK:  'X',
   PADDLE: '-',
   BALL:   'o',
-}
-
-var backgroundStyle = tcell.StyleDefault.Background(tcell.ColorLightSlateGrey)
-
-var tileToStyle = map[TileId]tcell.Style{
-  EMPTY:  backgroundStyle,
-  WALL:   backgroundStyle.Foreground(tcell.ColorNames["black"]),
-  BLOCK:  backgroundStyle.Foreground(tcell.ColorNames["blue"]),
-  PADDLE: backgroundStyle.Foreground(tcell.ColorNames["red"]),
-  BALL:   backgroundStyle.Foreground(tcell.ColorNames["yellow"]),
 }
 ```
 
@@ -2298,21 +2288,71 @@ including locations of memory reads and writes, at each step. I piped the
 logging to a file and played the game once (breaking a few bricks before
 losing), then opened the log. Looking through the logs, I saw that immediately
 before output instructions for redrawing the paddle and the ball the instructions looked very
-similar, with just a couple of addresses different between the two. Compare
-this:
+similar, with just a couple of addresses different between the two.
+
+I looked for the instructions that precede the (x,y,z) output instructions,
+specifically the ones that precede updates for z=3 (PADDLE) and z=4 (BALL).
+Compare these lines (with minor changes), preceding each write of (x,y,3):
 
 ```
+[573] adjrel imm(-4)
+[575] jmpif imm(1) rel(0)
+[138] add pos(392) pos(384) pos(392)
+[142] mul imm(1) pos(392) rel(1)
+[146] add imm(0) imm(21) rel(2)
+[150] mul imm(3) imm(1) rel(3)
+[154] add imm(0) imm(161) rel(0)
+[158] jmpif imm(1) imm(549)
+[549] adjrel imm(4)
+[551] mul rel(-2) imm(42) pos(566)
+[555] add rel(-3) pos(566) pos(566)
+[559] add imm(639) pos(566) pos(566)
+[563] add imm(0) rel(-1) pos(1538)
+[567] print rel(-3)
+wrote value: 17
+[569] print rel(-2)
+wrote value: 21
+[571] print rel(-1)
+wrote value: 3
 ```
 
-With this:
+With these lines, preceding (with minor changes) each write of (x,y,4):
 
 ```
+[573] adjrel imm(-4)
+[575] jmpif imm(1) rel(0)
+[338] add pos(388) pos(390) pos(388)
+[342] add pos(389) pos(391) pos(389)
+[346] mul imm(1) pos(388) rel(1)
+[350] mul pos(389) imm(1) rel(2)
+[354] mul imm(4) imm(1) rel(3)
+[358] add imm(0) imm(365) rel(0)
+[362] jmpif imm(1) imm(549)
+[549] adjrel imm(4)
+[551] mul rel(-2) imm(42) pos(566)
+[555] add rel(-3) pos(566) pos(566)
+[559] add imm(639) pos(566) pos(566)
+[563] add imm(0) rel(-1) pos(1586)
+[567] print rel(-3)
+wrote value: 23
+[569] print rel(-2)
+wrote value: 22
+[571] print rel(-1)
+wrote value: 4
 ```
 
-Based on this it seemed like the paddle's x location was stored in address 392
-and the ball's x location in address 388. So I patched my [Intcode
-VM](https://github.com/dhconnelly/advent-of-code-2019/blob/master/intcode/machine.go)
-to reroute reads from address 392 to address 388:
+Since we know the output order is (x,y,z), we can trace back from the print
+instruction for the x-coordinate (it's the first one of the three) and see
+that in both cases it's writing a value from rel(-3), which, after the `adjrel
+imm(4)` statement in both traces, should point to the value that was loaded
+previously into rel(1) from position 392 (for the paddle) or position 388 (for
+the ball). Okay, so it seems like the ball's x-coordinate is stored at address 388.
+Why don't we just always return that value when retrieving the paddle's
+x-coordinate, i.e. redirect reads of address 392 to address 388?
+
+Well, I did that in my [Intcode
+VM](https://github.com/dhconnelly/advent-of-code-2019/blob/master/intcode/machine.go),
+and it looks like this:
 
 ```
 diff --git a/intcode/machine.go b/intcode/machine.go
@@ -2331,7 +2371,7 @@ index 9b2cc59..a40c516 100644
     return v
 ```
 
-This worked! Here's a video (this was before I added colors):
+This worked! Here's a video:
 
 <iframe width="560" height="315"
 src="https://www.youtube.com/embed/VIEGPBUezWo" frameborder="0"
