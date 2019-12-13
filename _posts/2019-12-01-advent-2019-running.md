@@ -2066,11 +2066,27 @@ I should mention that, after this code appeared to be working (i.e. it solved
 test case 1 from the problem description), it still seemed to have problems.
 The answer it gave was wrong, and it turned out that it wasn't giving the
 right answer for test case 2, either. I spent about an hour debugging this,
-mostly fiddling with the least common multiple implementation and
-adding and removing printf statements. Well, it turns out that when I was
-trying my bit-packing approach (mentioned above), I switched the
-type of each coordinate to `int8`. Suddenly, while staring at debugging
-output, I noticed that many of the values were bigger than I'd expected,
-outside of the range [-128,127], and it dawned on me that I had integer
-overflow. s/int8/int64/ fixed the problem. I can assure you that this mistake
-is now forever burned into my brain.
+mostly fiddling with the least common multiple implementation and adding and
+removing printf statements. Well, it turns out that when I was trying my
+bit-packing approach (mentioned above), I switched the type of each coordinate
+to `int8`. Suddenly, while staring at debugging output, I noticed that many of
+the values were bigger than I'd expected, outside of the range [-128,127], and
+it dawned on me that I had integer overflow. s/int8/int64/ fixed the problem.
+I can assure you that this mistake is now forever burned into my brain.
+
+Okay, so now after all, it occurred to me on my commute home why the system
+will return to its initial state and we don't need to worry about some
+intermediate, non-initial state forming the beginning of the cycle. Here's
+why:
+
+As mentioned above,
+
+    state(n) = {pos(n), vel(n)}
+    pos(n) = pos(n-1) + vel(n)
+    vel(n) = vel(n-1) + diffs(n-1)
+    diffs = /* something only involving pos(n-1) */
+
+So a state(n-1) is always uniquely determined by state(n). We can't have two
+distinct parent states of any beginning of a cycle.
+
+That was a bit convoluted; been a long time since I had to write a proof :)
