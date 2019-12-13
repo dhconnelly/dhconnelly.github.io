@@ -15,7 +15,7 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 [[Day 5]](#day-5) [[Day 6]](#day-6) [[Day 7]](#day-7) [[Day 8]](#day-8)
 [[intcode refactoring]](#intcode-refactoring) [[Day 9]](#day-9)
 [[intcode refactoring round 2]](#intcode-refactoring-round-2)
-[[Day 10]](#day-10) [[Day 11]](#day-11)
+[[Day 10]](#day-10) [[Day 11]](#day-11) [[Day 12]](#day-12)
 
 ## Day 1
 
@@ -1835,3 +1835,242 @@ func printGrid(g grid) {
 
 That's it :) Code is on
 [GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day11/day11.go).
+
+
+## Day 12
+
+Another revenge day for yesterday's easy one. I think it took me five hours.
+The first part only took about a half hour, after which I gave part 2 a shot
+without changing anything -- which did not work, of course. Let me walk
+through part 1 before getting to part 2 and the mistakes I made and the
+problems I ran into there.
+
+Okay, so for part 1, each moon has position and velocity:
+
+```
+type moon struct {
+  p, v geom.Pt3
+}
+```
+
+We simulate the system by repeatedly stepping through the gravity and velocity
+updates:
+
+```
+func step(ms []moon) {
+  applyGravity(ms)
+  applyVelocity(ms)
+}
+
+func simulate(ms []moon, n int) []moon {
+  ms2 := make([]moon, len(ms))
+  copy(ms2, ms)
+  for i := 0; i < n; i++ {
+    step(ms2)
+  }
+  return ms2
+}
+```
+
+`applyGravity` is a bit verbose:
+
+```
+func applyGravity(ms []moon) {
+  for i := 0; i < len(ms)-1; i++ {
+    for j := i + 1; j < len(ms); j++ {
+      applyGravityPair(&ms[i], &ms[j])
+    }
+  }
+}
+
+func applyGravityPair(m1, m2 *moon) {
+  if m1.p.X < m2.p.X {
+    m1.v.X, m2.v.X = m1.v.X+1, m2.v.X-1
+  } else if m1.p.X > m2.p.X {
+    m1.v.X, m2.v.X = m1.v.X-1, m2.v.X+1
+  }
+  if m1.p.Y < m2.p.Y {
+    m1.v.Y, m2.v.Y = m1.v.Y+1, m2.v.Y-1
+  } else if m1.p.Y > m2.p.Y {
+    m1.v.Y, m2.v.Y = m1.v.Y-1, m2.v.Y+1
+  }
+  if m1.p.Z < m2.p.Z {
+    m1.v.Z, m2.v.Z = m1.v.Z+1, m2.v.Z-1
+  } else if m1.p.Z > m2.p.Z {
+    m1.v.Z, m2.v.Z = m1.v.Z-1, m2.v.Z+1
+  }
+}
+```
+
+But velocity is simple:
+
+```
+func applyVelocity(ms []moon) {
+  for i := range ms {
+    ms[i].p.TranslateBy(ms[i].v)
+  }
+}
+```
+
+Finding the total system energy is just a loop, vector norms, and arithmetic:
+
+```
+func moonEnergy(m moon) int {
+  return m.p.ManhattanNorm() * m.v.ManhattanNorm()
+}
+
+func energy(ms []moon) int {
+  total := 0
+  for _, m := range ms {
+    total += moonEnergy(m)
+  }
+  return total
+}
+```
+
+That's it for part 1.
+
+```
+func main() {
+  ms := readPoints(os.Args[1])
+  fmt.Println(energy(simulate(ms, 1000)))
+}
+```
+
+Let me start part 2 by saying that my approach for part 2 was to track every
+state that we've seen so far, in case the cycle we eventually find starts from
+some non-initial state; that is, I thought that it could a while for all the
+moons to settle into a rhythm, and the cycle would be some subset (s_m, s_m+1,
+... s_n) of states from the entire chain (s_1, s2, ..., s_n). More on that
+later.
+
+When I tried to use this for part 2, it ran out of memory. Not surprising,
+considering we were warned in the problem description that we'd need to come
+up with a more efficient simulation. I was keeping each previous total system
+state (a `[4]moon`) in a `map[[4]moon]bool`, but each moon is modeled as 6
+`int64`s (three for each of position and velocity), which is 48 bytes per
+moon, which is 192 bytes per state, and once we're tracking 4 billion states
+(per test case 2), this is already about a terrabyte of data. Not feasible for
+a single hashmap on a Chromebook.
+
+My next idea was to try to write out the update equations and see
+if there was some sort of trick. I noticed, for example, that
+
+    pos(moon, n) = pos(moon, 0) + sum(vel(moon, k) for k = 1..n)
+    vel(moon, n) = sum(diffs(moon, moons, k) for k = 1..n)
+
+but this didn't help. Ideally this would lead to some sort of linear equation,
+something to be solved with matrices, but the fact that the diffs depend on
+`sign(pos(moon1) - pos(moon2))` makes this hard, I think. I don't think that
+can be modeled with a linear equation.
+
+After this I spent a bit of time trying to reduce the size of the state. If
+every moon could fit into a single `int64`, for example, then the entire state
+would only be 32 bytes, but this is still dominated by the need to potentially
+store 4+ billion states: still >100 GB, still not feasible for my Chromebook.
+
+I talked with a colleague of mine, Andrew, who is also doing Advent of Code.
+He argued that we don't actually need to track every previous state, because a
+cycle must necessarily return to the initial state. This wasn't clear to me,
+but he was pretty certain about it and solved the problem with it, so I went
+ahead and modified my code to assume this, hoping to patch it up later if
+necessary. But now, instead of running out of memory, the program just sat and
+churned. Adding some logging showed that there was no way it would solve even
+the second test case in a reasonable amount of time.
+
+It was at this point that Andrew pointed out that we can simulate each (x,y,z)
+dimension independently. This is nice because it means we can use goroutines
+and simulate on three cores instead of one -- and because each goroutine only
+needs to find a cycle in *that dimension*, not all three, making the cycle
+lengths much shorter. After making these changes, my program was able to find
+the three dimensional cycle lengths in under 50ms -- a drastic difference!
+As implemented, the per-dimension simulation never copies data that doesn't
+fit into single machine words (as far as I can tell), as opposed to doing math
+on `geom.Pt3` values that each copy three `int64`s when methods are called on
+them for basic arithmetic. Additionally, finding the per-dimension cycles
+simply requires drastically fewer steps -- in my case, by 10 or so
+orders of magnitude fewer steps. This makes the problem tractable.
+
+On to the code :)
+
+First we flatten the state so that we can treat each coordinate's position and
+velocity separately:
+
+```
+type state struct {
+  px, py, pz, vx, vy, vz [4]int64
+}
+```
+
+Each simulation step is pretty straightforward now:
+
+```
+func applyGravity(px, vx *[4]int64) {
+  for i := 0; i < len(px)-1; i++ {
+    for j := i + 1; j < len(px); j++ {
+      if px[i] < px[j] {
+        vx[i] += 1
+        vx[j] -= 1
+      } else if px[i] > px[j] {
+        vx[i] -= 1
+        vx[j] += 1
+      }
+    }
+  }
+}
+
+func applyVelocity(px, vx *[4]int64) {
+  for i := range px {
+    px[i] += vx[i]
+  }
+}
+
+func step(px, vx *[4]int64) {
+  applyGravity(px, vx)
+  applyVelocity(px, vx)
+}
+```
+
+To find a loop for a given coordinate, we step until we see a position and
+velocity vector that matches the initial one, then send the iteration count
+out on a channel. We do this for each coordinate, then pull the per-dimension
+iteration counts out of the channel and compute the least common multiple --
+the smallest number that is a multiple of all three, which should be the
+number of steps it takes to cycle all three dimensions.
+
+```
+func findLoopCoord(px, vx [4]int64, ch chan<- int64) {
+  pi, vi := px, vx
+  for i := int64(1); ; i++ {
+    step(&px, &vx)
+    if px == pi && vx == vi {
+      ch <- i
+      return
+    }
+  }
+}
+
+func findLoop(s state) int64 {
+  ch := make(chan int64)
+  defer close(ch)
+  go findLoopCoord(s.px, s.vx, ch)
+  go findLoopCoord(s.py, s.vy, ch)
+  go findLoopCoord(s.pz, s.vz, ch)
+  return lcm(<-ch, <-ch, <-ch)
+}
+```
+
+That finally does it.
+
+I should mention that, after this code appeared to be working (i.e. it solved
+test case 1 from the problem description), it still seemed to have problems.
+The answer it gave was wrong, and it turned out that it wasn't giving the
+right answer for test case 2, either. I spent about an hour debugging this,
+mostly fiddling with the least common multiple implementation and
+adding and removing printf statements. Well, it turns out that when I was
+trying my bit-packing approach (mentioned above), I switched the
+type of each coordinate to `int8`. Suddenly, while staring at debugging
+output, I noticed that many of the values were bigger than I'd expected,
+outside of the range [-128,127], and it dawned on me that I had integer
+overflow. s/int8/int64/ fixed the problem. I can assure you that this mistake
+is now forever burned into my brain.
