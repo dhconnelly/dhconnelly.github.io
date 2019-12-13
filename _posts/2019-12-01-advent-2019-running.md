@@ -16,6 +16,7 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 [[intcode refactoring]](#intcode-refactoring) [[Day 9]](#day-9)
 [[intcode refactoring round 2]](#intcode-refactoring-round-2)
 [[Day 10]](#day-10) [[Day 11]](#day-11) [[Day 12]](#day-12)
+[[Day 13]](#day-13)
 
 ## Day 1
 
@@ -2095,3 +2096,247 @@ distinct parent states of any beginning of a cycle.
 
 That was a bit convoluted; it's been a long time since I had to write a proof
 :)
+
+
+## Day 13
+
+This was the coolest thing yet. For rendering the screen and getting key
+events I used the library [tcell](https://github.com/gdamore/tcell), which has
+a super-simple API and worked with zero issues. It took me maybe ten minutes from
+adding the import statement to drawing the entire screen properly. Handling
+key events properly took a bit longer, particularly since it seems that most
+[curses-style](https://en.wikipedia.org/wiki/Curses_(programming_library))
+libraries don't support keyup vs. keydown events, just "keypress." Anyway,
+on to the code, before I talk about how I implemented beating the games.
+
+For tiles and joystick position I defined some enums, as usual:
+
+```
+type TileId int
+
+const (
+  EMPTY  TileId = 0
+  WALL   TileId = 1
+  BLOCK  TileId = 2
+  PADDLE TileId = 3
+  BALL   TileId = 4
+)
+
+type JoystickPos int
+
+const (
+  NEUTRAL JoystickPos = 0
+  LEFT    JoystickPos = -1
+  RIGHT   JoystickPos = 1
+)
+```
+
+For overall game state and communication with the wrapper main I added a
+`GameState` struct with the score and the raw tiles in a map (since for part 1
+we need how many tiles were written; probably not necessary but I'd added it
+in part 1 and didn't remove it):
+
+```
+type ScreenTiles map[geom.Pt2]TileId
+
+type GameState struct {
+  Joystick JoystickPos
+  Score    int
+  Tiles    ScreenTiles
+}
+```
+
+Before we go into the main loop, we set up the channels: input and output as
+usual for the intcode machine, and then a channel for reading key events from
+the screen -- implemented with a goroutine that does a blocking read and emits
+key events on a channel -- and finally a `time.Tick` channel for controlling
+the i/o loop speed:
+
+```
+func readEvents(screen tcell.Screen) chan *tcell.EventKey {
+  ch := make(chan *tcell.EventKey)
+  go func() {
+    for {
+      event := screen.PollEvent()
+      switch e := event.(type) {
+      case *tcell.EventKey:
+        ch <- e
+      }
+    }
+  }()
+  return ch
+}
+
+func Play(
+  data []int64,
+  screen tcell.Screen,
+  frameDelay time.Duration,
+  joystickInit JoystickPos,
+) (GameState, error) {
+  in := make(chan int64)
+  defer close(in)
+  out := intcode.RunProgram(data, in)
+  var events chan *tcell.EventKey
+  if screen != nil {
+    screen.Clear()
+    events = readEvents(screen)
+  }
+  state := GameState{
+    Tiles:    ScreenTiles(make(map[geom.Pt2]TileId)),
+    Joystick: joystickInit,
+  }
+  tick := time.Tick(frameDelay)
+  /* snip */
+}
+```
+
+After that we go into the main loop, which wraps a select over the events
+channel (to record the current joystick state), the tick channel (to send the
+current joystick channel if the machine is trying to read it, otherwise
+continue without blocking), and the output channel (to read the screen updates
+and detect halting):
+
+```
+  /* snip */
+loop:
+  for {
+    select {
+    case e := <-events:
+      switch e.Key() {
+      case tcell.KeyCtrlC:
+        break loop
+      case tcell.KeyLeft:
+        state.Joystick = LEFT
+      case tcell.KeyRight:
+        state.Joystick = RIGHT
+      }
+
+    case <-tick:
+      select {
+      case in <- int64(state.Joystick):
+        state.Joystick = joystickInit
+      default:
+        continue
+      }
+
+    case x, ok := <-out:
+      if !ok {
+        break loop
+      }
+      y, z := <-out, <-out
+      if x == -1 && y == 0 {
+        if z > 0 {
+          state.Score = int(z)
+        }
+      } else {
+        tile := TileId(z)
+        state.Tiles[geom.Pt2{int(x), int(y)}] = tile
+        if screen != nil {
+          draw(screen, int(x), int(y), tile)
+        }
+      }
+    }
+  }
+
+  return state, nil
+}
+```
+
+That's the core of the game logic. Rendering the various tiles uses some maps
+with predetermined styles and characters:
+
+```
+func draw(screen tcell.Screen, x, y int, tile TileId) {
+  screen.SetContent(x, y, tileToRune[tile], nil, tileToStyle[tile])
+  screen.Show()
+}
+
+var tileToRune = map[TileId]rune{
+  EMPTY:  ' ',
+  WALL:   '@',
+  BLOCK:  'X',
+  PADDLE: '-',
+  BALL:   'o',
+}
+
+var backgroundStyle = tcell.StyleDefault.Background(tcell.ColorLightSlateGrey)
+
+var tileToStyle = map[TileId]tcell.Style{
+  EMPTY:  backgroundStyle,
+  WALL:   backgroundStyle.Foreground(tcell.ColorNames["black"]),
+  BLOCK:  backgroundStyle.Foreground(tcell.ColorNames["blue"]),
+  PADDLE: backgroundStyle.Foreground(tcell.ColorNames["red"]),
+  BALL:   backgroundStyle.Foreground(tcell.ColorNames["yellow"]),
+}
+```
+
+The full code is on
+[GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/breakout/breakout.go).
+The wrapper main function is pretty boring, but can be found there too, both
+[headless](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day13/day13.go)
+to solve parts 1 and 2 and
+[interactive](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day13/play.go)
+to play the game.
+
+Okay, so how to beat the game without having to do it manually (because I'm
+terrible at it)?
+
+I had three ideas:
+
+1. Write an AI for the paddle
+2. Disassemble the input program and modify it so the ball always bounces
+3. Modify the machine so that the program *thinks* the ball should bounce
+
+The AI idea sounded fun, but the other two sounded like more fun, considering
+I've never done anything like them before. I didn't want to write a
+disassembler, and even though I know some people already wrote them for
+intcode and posted them on Reddit, I wanted a self-contained solution. So I
+settled on the third idea, to fool the program.
+
+To do this I added logging to the machine so that it prints each instruction,
+including locations of memory reads and writes, at each step. I piped the
+logging to a file and played the game once (breaking a few bricks before
+losing), then opened the log. Looking through the logs, I saw that immediately
+before output instructions for redrawing the paddle and the ball the instructions looked very
+similar, with just a couple of addresses different between the two. Compare
+this:
+
+```
+```
+
+With this:
+
+```
+```
+
+Based on this it seemed like the paddle's x location was stored in address 392
+and the ball's x location in address 388. So I patched my [Intcode
+VM](https://github.com/dhconnelly/advent-of-code-2019/blob/master/intcode/machine.go)
+to reroute reads from address 392 to address 388:
+
+```
+diff --git a/intcode/machine.go b/intcode/machine.go
+index 9b2cc59..a40c516 100644
+--- a/intcode/machine.go
++++ b/intcode/machine.go
+@@ -40,6 +40,9 @@ func (m *machine) get(addr int64, md mode) int64 {
+  v := m.data[addr]
+  switch md {
+  case pos:
++   if v == 392 {
++     v = 388
++   }
+    return m.data[v]
+  case imm:
+    return v
+```
+
+This worked! Here's a video (this was before I added colors):
+
+<iframe width="560" height="315"
+src="https://www.youtube.com/embed/VIEGPBUezWo" frameborder="0"
+allow="accelerometer; autoplay; encrypted-media; gyroscope;
+picture-in-picture" allowfullscreen></iframe>
+
+The paddle drawing seems a bit wonky now, it never erases after it moves to a
+position, but who cares :)
