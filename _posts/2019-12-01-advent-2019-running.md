@@ -2079,7 +2079,11 @@ will return to its initial state and we don't need to worry about some
 intermediate, non-initial state forming the beginning of the cycle. Here's
 why:
 
-As mentioned above,
+Suppose there's a chain of states (s_0, ..., s_m-1, s_m, s_m+1, ..., s_n,
+s_m), so that s_m has two distinct parent states: s_m-1, resulting from s_0,
+and s_n.
+
+But as mentioned above,
 
     state(n) = {pos(n), vel(n)}
     pos(n) = pos(n-1) + vel(n)
@@ -2089,4 +2093,5 @@ As mentioned above,
 So a state(n-1) is always uniquely determined by state(n). We can't have two
 distinct parent states of any beginning of a cycle.
 
-That was a bit convoluted; been a long time since I had to write a proof :)
+That was a bit convoluted; it's been a long time since I had to write a proof
+:)
