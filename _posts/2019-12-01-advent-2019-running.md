@@ -16,7 +16,7 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 [[intcode refactoring]](#intcode-refactoring) [[Day 9]](#day-9)
 [[intcode refactoring round 2]](#intcode-refactoring-round-2)
 [[Day 10]](#day-10) [[Day 11]](#day-11) [[Day 12]](#day-12)
-[[Day 13]](#day-13)
+[[Day 13]](#day-13) [[Day 14]](#day-14)
 
 ## Day 1
 
@@ -2380,3 +2380,109 @@ picture-in-picture" allowfullscreen></iframe>
 
 The paddle drawing seems a bit wonky now, it never erases after it moves to a
 position, but who cares :)
+
+
+## Day 14
+
+Revenge again for the intcode problems. This took me all day, on and off. Now
+granted, I spent all day with my daughter, who is teething (molars) and was
+incredibly clingy and crabby and was driving me crazy -- but I still probably
+spent four hours on it without even solving part 1. I gave up after her
+naptime, and then read through some Reddit threads after her bedtime. I was,
+in fact, on the totally wrong track.
+
+Okay, what was I doing wrong?
+
+My initial thought was of something about linear programming, which I learned
+about back in university and haven't used since, and so I decided to avoid
+something that would require a bunch of research.
+
+I latched on early to the idea of iteratively expanding and reducing the
+required chemicals to produce a FUEL until no more reductions were possible
+using the given reactions alone, then trying to work out a strategy for how
+best to produce unnecessary chemicals. My first idea was to do it essentially
+randomly, i.e. in Go's map iteration order. This produced inconsistent
+results, so my next idea was to recursively build excess for *each* remaining
+required chemical, recording the resulting total ore cost and then using the
+branch that minimized that cost. This didn't halt: also not a good strategy.
+Doing this recursively, particularly for the real input (which had something
+like ten unsatisfied quantities after non-wastefully applying rules alone),
+creates a combinatorial explosion. I spent a long time re-writing and staring
+at the above and trying to find a better way to select excess chemicals to
+build.
+
+The easier approach, apparently, is to just go ahead and build the chemicals
+needed at each step and keep track of the excess, which can be used later to
+reduce the amount of chemicals to produce for some other reaction.
+
+Types:
+
+```
+type quant struct {
+  amt  int
+  chem string
+}
+
+type reaction struct {
+  out quant
+  ins []quant
+}
+```
+
+To find the amount of ore we need to build a given amount of a chemical, we
+first use whatever excess we have, then build however much more we need to
+satisfy the appropriate reaction and store any excess, then recursively find
+the amount of ore required to satisfy that reaction.
+
+```
+func oreNeeded(
+  chem string, amt int,
+  reacts map[string]reaction,
+  waste map[string]int,
+) int {
+  if chem == "ORE" {
+    return amt
+  }
+
+  // reuse excess production before building more
+  if avail := waste[chem]; avail > 0 {
+    reclaimed := ints.Min(amt, avail)
+    waste[chem] -= reclaimed
+    amt -= reclaimed
+  }
+  if amt == 0 {
+    return 0
+  }
+
+  // build as much as necessary and store the excess
+  react := reacts[chem]
+  k := 1
+  if amt > react.out.amt {
+    k = divceil(amt, react.out.amt)
+  }
+  waste[chem] += k*react.out.amt - amt
+
+  // recursively find the ore needed for the ingredients
+  ore := 0
+  for _, in := range react.ins {
+    ore += oreNeeded(in.chem, k*in.amt, reacts, waste)
+  }
+  return ore
+}
+```
+
+This is the first day that I had no idea where I was really going. [Day
+12](#day-12), the moon simulation, I understood, and I solved part 1 pretty
+easily and had a few ideas in mind for part 2 before talking it over with my
+colleague Andrew. Today, though, I had no idea if I was on the right track,
+no new ideas to try, and I was frustrated all day.
+
+The lesson I'll draw from this is that, if the problem asks "find the ore
+required to build this chemical", then the code should do that: `func
+oreRequired(chem string, amt int) int`. The trick of keeping track of excess
+chemicals, though -- I don't know that I'd have come up with that even if I'd
+started off with a more straightforward approach. Well, it's good to get the
+practice.
+
+Code for this solution is on
+[GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day14/day14.go).
