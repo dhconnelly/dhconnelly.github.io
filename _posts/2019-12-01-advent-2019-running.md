@@ -16,7 +16,7 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 [[intcode refactoring]](#intcode-refactoring) [[Day 9]](#day-9)
 [[intcode refactoring round 2]](#intcode-refactoring-round-2)
 [[Day 10]](#day-10) [[Day 11]](#day-11) [[Day 12]](#day-12)
-[[Day 13]](#day-13) [[Day 14]](#day-14)
+[[Day 13]](#day-13) [[Day 14]](#day-14) [[Day 15]](#day-15)
 
 ## Day 1
 
@@ -2486,3 +2486,232 @@ practice.
 
 Code for this solution is on
 [GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day14/day14.go).
+
+
+## Day 15
+
+Okay, something fun and straightforward again! I didn't get up early today, so
+I just had an hour or so at naptime and then again after bedtime, but as
+opposed to yesterday, the amount of time it took was productive instead of
+frustrating and seemingly boundless. I immediately recognized this as a graph
+traversal problem, but couldn't decide whether to do breadth-first or
+depth-first initially and ended up implementing part of both before starting
+over in the evening.
+
+My problem earlier in the day was in trying to both map out the space and find
+the shortest path at the same time, instead of first generating the map using
+DFS and then finding shortest paths using BFS. The problem with trying to do
+both at the same time is that it adds a ton of complexity. If you try do both
+move the droid and keep track of the shortest path to the oxygen with DFS, you
+end up having a problem when you find a shorter path to a previously-visited
+node: do you then recursively update the distances for everything you already
+visited from that node, or do you just update the predecessor of that node and
+compute the length later -- and then, why not just do BFS anyway? If you try
+to do both at the same time with BFS, then you have to constantly move the
+droid back to the starting position each time.
+
+After it occurred to me to first build the map and then find the path, the
+problem simplified drastically -- as did the code.
+
+As usual, we start with some enums:
+
+```
+type status int
+
+const (
+  WALL status = 0
+  OK   status = 1
+  OXGN status = 2
+)
+
+type direction int
+
+const (
+  NORTH direction = 1
+  SOUTH direction = 2
+  WEST  direction = 3
+  EAST  direction = 4
+)
+```
+
+I also abstracted away the intcode I/O into a `droid` struct that can move
+about:
+
+```
+type droid struct {
+  in  chan<- int64
+  out <-chan int64
+}
+
+func (d *droid) step(dir direction) status {
+  d.in <- int64(dir)
+  return status(<-d.out)
+}
+```
+
+Okay, so to build a map of the area, we run a DFS starting from (0, 0). We
+assume we're already there, and then we move to each neighbor,
+marking the status of that move on the map, recursively visit it, and then
+we step back from that neighbor and move to the next one:
+
+```
+func (d *droid) visit(p geom.Pt2, m map[geom.Pt2]status) {
+  // try to move to each unvisted neighbor, recurse, then return
+  for dir, dp := range directions {
+    next := p.Add(dp)
+    if _, ok := m[next]; ok {
+      continue
+    }
+    s := d.step(dir)
+    if m[next] = s; s == WALL {
+      continue
+    }
+    d.visit(next, m)
+    d.step(opposite(dir))
+  }
+}
+
+func explore(prog []int64) map[geom.Pt2]status {
+  in := make(chan int64)
+  out := intcode.RunProgram(prog, in)
+  d := droid{in, out}
+  m := map[geom.Pt2]status{geom.Zero2: OK}
+  d.visit(geom.Zero2, m)
+  return m
+}
+```
+
+The function `opposite` just returns a direction's opposite (since we need to
+move back to our original spot from a neighbor), and `neighbors` is a map of
+each direction to the necessary vectors:
+
+```
+func opposite(dir direction) direction {
+  switch dir {
+  case NORTH:
+    return SOUTH
+  case SOUTH:
+    return NORTH
+  case WEST:
+    return EAST
+  case EAST:
+    return WEST
+  }
+  log.Fatal("bad direction:", dir)
+  return 0
+}
+
+var directions = map[direction]geom.Pt2{
+  NORTH: geom.Pt2{0, 1},
+  SOUTH: geom.Pt2{0, -1},
+  WEST:  geom.Pt2{-1, 0},
+  EAST:  geom.Pt2{1, 0},
+}
+```
+
+When `explore` returns, we have a map of point -> status for each reachable
+point in the area. Now we need to find the shortest path from (0, 0) to the
+location of the oxygen system. To do this we use BFS over the coordinates,
+with neighbors of a given node are the non-wall nodes within one Manhattan
+distance step away on the grid. With BFS we always visit nodes at distance n
+from the starting position before visiting nodes at distance n+1. We do this
+using a queue, and we add neighbors of a given node to the end of the queue.
+The code to find all shortest paths is simpler than finding a single one, so
+here's the entire thing:
+
+```
+type node struct {
+  p geom.Pt2
+  n int
+}
+
+func shortestPaths(from geom.Pt2, m map[geom.Pt2]status) map[geom.Pt2]int {
+  // track which nodes we've visited and how far away they are
+  visited := make(map[geom.Pt2]bool)
+  dist := make(map[geom.Pt2]int)
+
+  // keep a queue of the next nodes to visit, in sorted order, with closer
+  // nodes always before further ones
+  q := []node{{from, 0}}
+  var nd node
+
+  // continue as long as the queue is empty
+  for len(q) > 0 {
+    // pop the head off the queue and record its distance
+    nd, q = q[0], q[1:]
+    dist[nd.p] = nd.n
+
+    // add each unvisited neighbor to the end of the visit queue, with
+    // distance one greater than the distance of the current node
+    for _, dp := range directions {
+      nbr := nd.p.Add(dp)
+      if visited[nbr] {
+        continue
+      }
+      visited[nbr] = true
+      if m[nbr] != WALL {
+        q = append(q, node{nbr, nd.n + 1})
+      }
+    }
+  }
+  return dist
+}
+```
+
+Then, to find the length of the shortest path to the oxygen system, we just
+return the distance of the oxygen system's node:
+
+```
+func findOxygen(m map[geom.Pt2]status) geom.Pt2 {
+  for p, s := range m {
+    if s == OXGN {
+      return p
+    }
+  }
+  log.Fatal("oxygen not found")
+  return geom.Zero2
+}
+
+func shortestPath(from, to geom.Pt2, m map[geom.Pt2]status) int {
+  return shortestPaths(from, m)[to]
+}
+```
+
+Hooking it all together, we have:
+
+```
+func main() {
+  data, err := intcode.ReadProgram(os.Args[1])
+  if err != nil {
+    log.Fatal(err)
+  }
+  m := explore(data)
+  p := findOxygen(m)
+  fmt.Println(shortestPath(geom.Zero2, p, m))
+}
+```
+
+For part 2, we want to find the distance of the *furthest* node, since the
+time it takes to reach it is the time it takes for the entire area to fill
+with oxygen. Since we know all the shortest path distances already, we just
+find the longest one of those:
+
+```
+func longestPath(from geom.Pt2, m map[geom.Pt2]status) int {
+  max := 0
+  for _, n := range shortestPaths(from, m) {
+    max = ints.Max(max, n)
+  }
+  return max
+}
+```
+
+This was a blast. I'd like to come back to this day after the year is over and
+create an animated GIF of the droid exploration and oxygen propagation. I'd
+like to do that for several of the problems, actually -- there's a lot of nice
+visualizations on Reddit for any given day, and my limited experience with
+Go's image library makes it seem like this would be straightforward, if only I
+took the time to learn how :)
+
+Full code for today is
+[here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day15/day15.go).
