@@ -17,6 +17,7 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 [[intcode refactoring round 2]](#intcode-refactoring-round-2)
 [[Day 10]](#day-10) [[Day 11]](#day-11) [[Day 12]](#day-12)
 [[Day 13]](#day-13) [[Day 14]](#day-14) [[Day 15]](#day-15)
+[[Day 16]](#day-16)
 
 ## Day 1
 
@@ -2715,3 +2716,159 @@ took the time to learn how :)
 
 Full code for today is
 [here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day15/day15.go).
+
+
+## Day 16
+
+This is the longest I've spent on any day so far, but I did eventually get it
+on my own! The first part was straightforward -- define the signal pattern and
+apply it to the input signal 100 times:
+
+```
+func coef(row, col int) int {
+  switch (col / row) % 4 {
+  case 0: return 0
+  case 1: return 1
+  case 2: return 0
+  default: return -1
+  }
+}
+
+func fft(signal []int, phases int) []int {
+  signal = copied(signal)
+  scratch := make([]int, len(signal))
+  for ; phases > 0; phases-- {
+    for i := 0; i < len(signal); i++ {
+      sum := 0
+      for j := 0; j < len(signal); j++ {
+        sum += coef(i+1, j+1) * signal[j]
+      }
+      scratch[i] = ints.Abs(sum) % 10
+    }
+    signal, scratch = scratch, signal
+  }
+  return signal
+}
+```
+
+But the second part took me like five hours. I first tried to find some math
+trick that would make it easy, since reading 650 bytes (my input size) and
+repeating it 10,000 times requires at least 6.5 MB, assuming you somehow avoid
+expanding each integer into a multi-byte int representation, and then trying
+to precompute the enormous coefficient matrix would take up something like
+that much memory squared (or at least half that, considering the matrix is
+triangular) -- this is like 36 terrabytes of data! So I ended up on a
+Wikipedia exploration, re-learning about Fast Fourier Transforms, diagonal
+matrices, determinants and so on, as well as revisiting basic matrix algebra
+using inverses and matrix decompositions and so on, before eventually
+abandoning a math-heavy approach as (1) unbounded, when I wanted to definitely
+solve the problem today, and (2) unlikely to be necessary, since the
+backgrounds of Advent of Code participants vary so widely. I returned to the
+naive approach and tried to make it work.
+
+The first problem was running out of memory: the slices were simply too large,
+as mentioned. At some point, though, while dumping stuff to the console, I
+noticed that the offset specified by the first seven digits was very high,
+like, most of the way through the repeated signal. That meant that keeping
+everything in memory was more possible and there were many fewer elements to
+compute, since to find the last k elements `m[n-k], m[n-k+1], ... m[n]`
+elements of a vector `m`, where `A s = m` and `A` is the coefficient matrix
+and `s` is the input signal, we only need to consider the last k rows of the
+matrix `A` -- and since `A` is triangular, we only need to consider half the
+elements of each row of `A` (i.e. only need to precompute those coefficients).
+
+So far the code looked like this:
+
+```
+func extractMessage(signal []int, reps, phases, offset, digits int) []int {
+  // allocate the [offset, end) slice for computing the message
+  msg := sliceSignal(signal, offset, len(signal)*reps)
+  n := len(msg)
+
+  // pre-compute the coefficients, skipping the leading zeroes
+  coefs := make([][]int, n)
+  for i := 0; i < n; i++ {
+    coefs[i] = make([]int, n-i)
+    for j := i; j < n; j++ {
+      coefs[i][j-i] = coef(offset+i+1, offset+j+1)
+    }
+  }
+
+  // repeatedly apply the coefficient matrix rows to the message vector
+  scratch := make([]int, n)
+  for ; phases > 0; phases-- {
+    for i := 0; i < n; i++ {
+      sum := 0
+      for j := i; j < n; j++ {
+        sum += (coefs[i][j-i] * msg[j])
+      }
+      scratch[i] = ints.Abs(sum) % 10
+    }
+    msg, scratch = scratch, msg
+  }
+
+  return msg[:digits]
+}
+```
+
+This worked well, and it solved the part 2 examples in a reasonable
+amount of time, but still out-of-memoried on the real input during coefficient
+precomputation. I removed the precomputation, just relying on the `coef`
+function as defined above to compute each coefficient as needed, but it was
+too slow: even computing a single phase took more than several minutes before
+I stopped it.
+
+At some point here I noticed another thing in the debug output I was dumping
+to the console: it seemed like the coefficients were all ones! While taking a
+break, something occurred to me that I noticed during my matrix math
+diversion: rows in the lower half of the matrix were all ones, regardless of
+what size matrix I wrote out for doing manual products (to look for a general
+formula). And then it was obvious: the first n-1 elements of the nth row are
+zero, and then the next n elements are one, and so together this means that if
+we're looking at a row more than half way down the matrix, the zeroes and ones
+make up the entire row!
+
+This means that we can forget about the coefficients entirely and just sum up
+the vector elements -- and if we do it starting from the last element, which
+is just itself, we don't even need to start the sum over at each previous
+element, since the  sum for element `a[n-k]` is just `sum(a[n-k+1], ...
+a[n])`.
+
+This was a pretty trivial change to the code above, and it works -- and
+computes the answer very quickly! This makes sense: the only allocation
+now is for the repeated signal from the offset (something like 500k integers,
+which should be about 4 MB at 8 bytes per integer).
+
+```
+func extractMessage(signal []int, reps, phases, offset, digits int) []int {
+  msg := sliceSignal(signal, offset, len(signal)*reps)
+  n := len(msg)
+  for ; phases > 0; phases-- {
+    sum := 0
+    for i := n - 1; i >= 0; i-- {
+      sum += msg[i]
+      msg[i] = ints.Abs(sum) % 10
+    }
+  }
+  return msg[:digits]
+}
+```
+
+Even though this took me forever I'm proud of it! This felt like a
+typical problem solving process for something nontrivial: explore the
+problem space a bit with some simpler examples/implementation, read the theory
+and try to apply it a bit, produce a naive implementation, use some heuristics
+based on understanding the input data, make space/time tradeoffs to get
+something usably efficient, then eventually find another heuristic that makes
+the problem tractable based on data exploration and debugging and writing
+things out by hand. That kind of realization really requires having spent
+enough time with the problem and data, in my experience!
+
+Looking at the [global
+leaderboard](https://adventofcode.com/2019/leaderboard/day/16) for this
+problem, it seems like this was the hardest problem yet. So I'm very happy
+that I solved it myself! Day 14 remains the only one that I couldn't figure
+out at all.
+
+Full code for today is
+[here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day16/day16.go).
