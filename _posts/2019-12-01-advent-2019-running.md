@@ -3111,3 +3111,6 @@ This worked. I don't believe it's a coincidence that the problems today and
 yesterday required exploiting specific properties of the data rather than
 solving some hard, general problem. It's a good lesson for problem solving in
 general and also reflects the real world :)
+
+Code is
+[here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day17/day17.go).
