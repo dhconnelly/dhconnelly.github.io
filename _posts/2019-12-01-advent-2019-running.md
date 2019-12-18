@@ -17,7 +17,7 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 [[intcode refactoring round 2]](#intcode-refactoring-round-2)
 [[Day 10]](#day-10) [[Day 11]](#day-11) [[Day 12]](#day-12)
 [[Day 13]](#day-13) [[Day 14]](#day-14) [[Day 15]](#day-15)
-[[Day 16]](#day-16)
+[[Day 16]](#day-16) [[Day 17]](#day-17)
 
 ## Day 1
 
@@ -2872,3 +2872,242 @@ out at all.
 
 Full code for today is
 [here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day16/day16.go).
+
+
+## Day 17
+
+Another straightforward part 1 and very long part 2 that required staring at
+the data until devising something based on the properties of the specific case
+:)
+
+For part 1, finding intersections, we start by reading the grid from the Intcode machine.
+
+```
+type grid struct {
+  height, width int
+  g             map[geom.Pt2]rune
+}
+
+func readGridFrom(out <-chan int64) (grid, bool) {
+  g := grid{g: make(map[geom.Pt2]rune)}
+  var width int
+  for ch := range out {
+    if ch == '\n' {
+      if width > 0 {
+        g.height++
+        g.width = width
+        width = 0
+        continue
+      } else {
+        return g, true
+      }
+    }
+    g.g[geom.Pt2{width, g.height}] = rune(ch)
+    width++
+  }
+  return grid{}, false
+}
+```
+
+Then we construct an adjacency list, where two points are adjacent if their
+Manhattan distance is 1 and neither is empty space (ASCII '.').
+
+```
+func (g grid) neighbors(p geom.Pt2) []geom.Pt2 {
+  var nbrs []geom.Pt2
+  for _, nbr := range p.ManhattanNeighbors() {
+    if c, ok := g.g[nbr]; ok && c != '.' {
+      nbrs = append(nbrs, nbr)
+    }
+  }
+  return nbrs
+}
+
+func readGraph(g grid) map[geom.Pt2][]geom.Pt2 {
+  m := make(map[geom.Pt2][]geom.Pt2)
+  for i := 0; i < g.height; i++ {
+    for j := 0; j < g.width; j++ {
+      p := geom.Pt2{j, i}
+      if c := g.g[p]; c == '.' {
+        continue
+      }
+      var edges []geom.Pt2
+      for _, nbr := range g.neighbors(p) {
+        edges = append(edges, nbr)
+      }
+      m[p] = edges
+    }
+  }
+  return m
+}
+```
+
+Now we can find intersections by simply finding all points that have more than
+two neighbors, and the alignment sum is computed over those points:
+
+```
+func intersections(m map[geom.Pt2][]geom.Pt2) []geom.Pt2 {
+  var ps []geom.Pt2
+  for p, edges := range m {
+    if len(edges) > 2 {
+      ps = append(ps, p)
+    }
+  }
+  return ps
+}
+
+func alignmentSum(g grid) int {
+  m := readGraph(g)
+  ps := intersections(m)
+  sum := 0
+  for _, p := range ps {
+    sum += p.X * p.Y
+  }
+  return sum
+}
+```
+
+For part 2, let me start with the framework for providing programs to the
+robot and reading its responses. All I/O is line-based, so we need to be able
+to read and write entire strings at a time, terminated by `'\n'`:
+
+```
+func writeLine(ch chan<- int64, line string) {
+  for _, c := range line {
+    ch <- int64(c)
+  }
+  ch <- int64('\n')
+}
+
+func readLine(ch <-chan int64) string {
+  var s []rune
+  for {
+    c := <-ch
+    if c == '\n' {
+      return string(s)
+    }
+    s = append(s, rune(c))
+  }
+}
+```
+
+To run the program headless we have to read the grid once at the beginning,
+read the input prompt lines before each input line, and then ignore all output
+but the last digit. This took a bit of trial-and-error to figure out.
+
+```
+func computeDust(data []int64, prog [4]string) int64 {
+  data = ints.Copied64(data)
+  data[0] = 2
+  in := make(chan int64)
+  out := intcode.RunProgram(data, in)
+  readGridFrom(out)
+  for _, line := range prog {
+    readLine(out)
+    writeLine(in, line)
+  }
+  readLine(out)
+  writeLine(in, "n")
+  var answer int64
+  for c := range out {
+    answer = c
+  }
+  return answer
+}
+```
+
+Okay! So for part 2, in the end I had to figure out the program by hand. Let
+me walk through how that happened.
+
+Initially I misread the problem and thought the program had to navigate the
+robot back to the starting position. So after writing a DFS traversal of the
+scaffolding that always walks back from successor nodes, to make sure we get
+back to the beginning, the path was very long. So at this point I assumed that
+I definitely had to figure out something clever, because there seemed to be
+simply too many different path components. So I read about different
+compression techniques for a while, read the problem again, and then noticed
+that the robot goes back to its initial position on its own.
+
+Then I noticed by staring at the grid that actually it's possible to visit
+every point without doing anything clever at all:
+
+```
+..............#########..........................
+..............#.......#..........................
+..............#.......#..........................
+..............#.......#..........................
+..............#.......#..........................
+..............#.......#..........................
+..............#.......#..........................
+..............#.......#..........................
+..............#...#####.#######.....#############
+..............#...#.....#.....#.....#...........#
+..............#...#.....#.....#.....#...........#
+..............#...#.....#.....#.....#...........#
+..............#######...#...#############.......#
+..................#.#...#...#.#.....#...#.......#
+..................#.#...#############...#.......#
+..................#.#.......#.#.........#.......#
+..................#.#.......#.#.........#########
+..................#.#.......#.#..................
+..............#############.#.#...#######........
+..............#...#.#.....#.#.#...#.....#........
+############^.#...#############...#.....#........
+#.............#.....#.....#.#.....#.....#........
+#.............#.....#.....#.#.....#.....#........
+#.............#.....#.....#.#.....#.....#........
+#.............#######.....#.#############........
+#.........................#.......#..............
+#.....#########...........#.......#..............
+#.....#.......#...........#.......#..............
+#.....#.......#...........#.......#..............
+#.....#.......#...........#.......#..............
+#.....#.......#############.......#######........
+#.....#.................................#........
+#######.................................#........
+........................................#........
+........................................#........
+........................................#........
+........................................#........
+........................................#........
+........................................#........
+........................................#........
+........................................#........
+........................................#........
+................................#########........
+```
+
+You can visit every point by simply always going forward until hitting a wall
+and taking the only available turn. I modified the path generation to do this,
+which is much simpler than DFS. The resulting path has a lot of common
+subsequences (rewritten here in the form that I eventually was able to reduce,
+with three repeated sequences):
+
+```
+L,12,L,12,L,6,L,6,
+R,8,R,4,L,12,
+L,12,L,12,L,6,L,6,
+L,12,L,6,R,12,R,8,
+R,8,R,4,L,12,
+L,12,L,12,L,6,L,6,
+L,12,L,6,R,12,R,8,
+R,8,R,4,L,12,
+L,12,L,12,L,6,L,6,
+L,12,L,6,R,12,R,8,
+```
+
+This is small enough to do by hand. I started by finding the longest element I could see
+immediately, "L,12,L,6", extracted it to a "variable", and proceeded from there. It didn't
+take long to get an answer:
+
+```
+A,B,A,C,B,A,C,B,A,C
+A: L,12,L,12,L,6,L,6
+B: R,8,R,4,L,12
+C: L,12,L,6,R,12,R,8
+```
+
+This worked. I don't believe it's a coincidence that the problems today and
+yesterday required exploiting specific properties of the data rather than
+solving some hard, general problem. It's a good lesson for problem solving in
+general and also reflects the real world :)
