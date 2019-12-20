@@ -3226,6 +3226,45 @@ dump, I produced an [annotated
 program](https://raw.githubusercontent.com/dhconnelly/advent-of-code-2019/master/day19/asm.txt)
 to figure out what was going on.
 
+Some interesting things in the program:
+
+- The [first
+  procedure](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day19/asm.txt#L138)
+  is a higher-level `apply` function with four parameters that
+  specify the address of another procedure to invoke and the
+  three arguments to forward to it.
+
+  This is used e.g.
+  [here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day19/asm.txt#L54),
+  where it computes abs(arg3) in a convoluted way: let `A` be
+  `apply` and `B` be `abs`; this computes
+
+```
+A(A, A, B, x)
+= A(A, B, x)
+= A(B, x)
+= B(x)
+```
+
+- An [absolute
+  value](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day19/asm.txt#L158)
+  procedure.
+
+- An
+  [assert-nonnegative procedure](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day19/asm.txt#L172)
+  procedure that prints 0 and halts if the argument is less than
+  zero.
+
+- A [crazy
+  procedure](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day19/asm.txt#L194)
+  that returns `arg1*arg0*arg2`, which is used to compute
+  [149x^2](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day19/asm.txt#L46),
+  [149y^2](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day19/asm.txt#L69),
+  as well as return 0 if `|149x^2-127y^2| < 14xy|` and -1
+  otherwise, which then
+  [becomes](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day19/asm.txt#L118)
+  1 and 0.
+
 In the end, the value of an x,y input pair is given by
 [determining](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day19/asm.txt#L115)
 whether it satisfies the equation `|149x^2 - 127y^2| < 14xy`. I
