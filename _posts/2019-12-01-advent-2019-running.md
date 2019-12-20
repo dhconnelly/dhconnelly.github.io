@@ -20,6 +20,7 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 [[Day 16]](#day-16) [[Day 17]](#day-17) [[Day 18]](#day-18)
 [[Day 19]](#day-19) [[intcode reverse
 engineering]](#intcode-reverse-engineering)
+[[Day 20]](#day-20)
 
 ## Day 1
 
@@ -3298,3 +3299,152 @@ This works :) Full code is
 [here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day19/day19.go)
 and the annotated Intcode assembly is
 [here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day19/asm.txt).
+
+
+## Day 20
+
+For Day 18 I wrote about a billion breadth-first searches, and
+[I have become exceedingly efficient at
+it](https://www.youtube.com/watch?v=ZKpFFD7aX3c). This was
+actually a pretty simple BFS, even with the part 2 "depth" twist,
+which despite being labeled "recursive" didn't involve any
+recursion for me.
+
+Most of the hard work is in parsing the maze, finding the
+portals, and storing adjacent tiles for each portal. I'll skip
+all of that (it's on
+[GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day20/day20.go))
+and go to the path finding.
+
+To begin with, we need some structs for the maze and for
+depth-aware locations. For the maze, I keep the raw grid data,
+rectangles specifying the outer and inner donut maze boundaries,
+and the location of each portal and a list of its adjacent tiles.
+
+```
+type maze struct {
+  g     grid
+  outer geom.Rect
+  inner geom.Rect
+  adjs  map[label][]geom.Pt2
+  lbls  map[geom.Pt2]label
+}
+
+type point struct {
+  p     geom.Pt2
+  depth int
+}
+```
+
+For a given tile, the adjacent tiles are Manhattan-adjacent
+passage tiles and the other side of an adjacent portal -- keeping
+in mind that outer tiles at the top level aren't passable. Then
+when returning the list of neighbors we make sure to update the
+depth appropriately for the portal-neighbors.
+
+```
+func (m maze) adjacent(from point) []point {
+  if m.g.g[from.p] == wall {
+    return nil
+  }
+  var nbrs []point
+  for _, nbr := range from.p.ManhattanNeighbors() {
+    c := m.g.g[nbr]
+
+    // don't go through walls
+    if c == wall {
+      continue
+    }
+
+    // go into passages
+    if c == passage {
+      nbrs = append(nbrs, point{nbr, from.depth})
+      continue
+    }
+
+    // go through portals
+    lbl, ok := m.lbls[nbr]
+    if !ok {
+      continue
+    }
+
+    // inner portal increases depth, outer decreases
+    depth := from.depth
+    if m.outer.Contains(nbr) {
+      depth++
+    } else {
+      // but don't go out at top level
+      if from.depth == 0 {
+        continue
+      }
+      depth--
+    }
+
+    // go through portals and update depth
+    for _, adj := range m.adjs[lbl] {
+      if from.p != adj {
+        nbrs = append(nbrs, point{adj, depth})
+      }
+    }
+  }
+  return nbrs
+}
+```
+
+Now we do a standard breadth-first search from "AA" to "ZZ". The
+only difference between part 1 and part 2 is the node-equality
+function to determine when we've reached our destionation: for
+part 1 we ignore the depth.
+
+```
+type bfsNode struct {
+  p point
+  d int
+}
+
+func eq(p1, p2 point) bool {
+  return p1.p == p2.p
+}
+
+func depthEq(p1, p2 point) bool {
+  return p1.p == p2.p && p1.depth == p2.depth
+}
+
+func shortestPath(
+  m maze,
+  from, to label,
+  eq func(p1, p2 point) bool,
+) int {
+  src := point{m.adjs[from][0], 0}
+  dst := point{m.adjs[to][0], 0}
+  q := []bfsNode{{src, 0}}
+  v := make(map[point]bool)
+  var first bfsNode
+  for len(q) > 0 {
+    first, q = q[0], q[1:]
+    if eq(first.p, dst) {
+      return first.d
+    }
+    v[first.p] = true
+    nbrs := m.adjacent(first.p)
+    for _, nbr := range nbrs {
+      if v[nbr] {
+        continue
+      }
+      q = append(q, bfsNode{nbr, first.d + 1})
+    }
+  }
+  log.Fatalf("path not found: %s -> %s", from, to)
+  return -1
+}
+```
+
+To kick it off we just do:
+
+```
+fmt.Println(shortestPath(m, lbl("AA"), lbl("ZZ"), eq)) // part 1
+fmt.Println(shortestPath(m, lbl("AA"), lbl("ZZ"), depthEq)) // part 2
+```
+
+That's it! Full code is
+[here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day20/day20.go).
