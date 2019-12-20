@@ -3276,9 +3276,7 @@ stuck this in
 to find a candidate range. Turns out the beam really is what it
 looked like in that initial 50x50 space:
 
-<iframe src="https://www.desmos.com/calculator/p6gk55drwm?embed"
-width="500px" height="500px" style="border: 1px solid #ccc"
-frameborder=0></iframe>
+<img src="/img/desmos-graph.png">
 
 So I implemented the equation in Go to be able to run it faster
 and then iterated over the candidate space:
