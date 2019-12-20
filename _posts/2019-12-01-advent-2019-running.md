@@ -17,7 +17,8 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 [[intcode refactoring round 2]](#intcode-refactoring-round-2)
 [[Day 10]](#day-10) [[Day 11]](#day-11) [[Day 12]](#day-12)
 [[Day 13]](#day-13) [[Day 14]](#day-14) [[Day 15]](#day-15)
-[[Day 16]](#day-16) [[Day 17]](#day-17)
+[[Day 16]](#day-16) [[Day 17]](#day-17) [[Day 18]](#day-18)
+[[Day 19]](#day-19)
 
 ## Day 1
 
@@ -3114,3 +3115,146 @@ general and also reflects the real world :)
 
 Code is
 [here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day17/day17.go).
+
+
+## Day 18
+
+I've not finished this one yet, despite having spent all my free time across
+three days now on it. Now, that wasn't a lot of time, since my wife is sick
+and my toddler is sick, but still like eight hours in total. I finally got
+part 1 at midnight last night after reading a hint on Reddit that took
+literally like five lines of code to memoize my recursive algorithm by
+reducing the amount of state I was tracking, but I'll finish part 2 before
+writing this up with all my attempts.
+
+
+## Day 19
+
+Straightforward part 1, we just repeatedly run the program with a
+given x,y pair and map out the 50x50 space:
+
+```
+type drone struct {
+  prog []int64
+}
+
+func (d drone) test(x, y int, debug bool) state {
+  prog := ints.Copied64(d.prog)
+  in := make(chan int64)
+  defer close(in)
+  out := intcode.Run(prog, in, debug)
+  in <- int64(x)
+  in <- int64(y)
+  return state(<-out)
+}
+
+type beamReadings struct {
+  x, y, width, height int
+  m                   map[geom.Pt2]state
+}
+
+func mapBeamReadings(prog []int64, x, y, width, height int) beamReadings {
+  d := drone{prog}
+  m := beamReadings{x, y, width, height, make(map[geom.Pt2]state)}
+  for j := x; j < x+width; j++ {
+    for i := y; i < y+height; i++ {
+      m.m[geom.Pt2{j, i}] = d.test(j, i, false)
+    }
+  }
+  return m
+}
+
+func countBeamReadings(m beamReadings) int {
+  affected := 0
+  for _, v := range m.m {
+    if v == pulled {
+      affected++
+    }
+  }
+  return affected
+}
+```
+
+For part 2, I initially started to take the same approach but maybe first
+validate that the beam has the same shape as it appeared to in the
+first 50x50 spots -- that is, one solid beam emanating from the
+apparent starting point -- but then, after mapping it for a
+larger search space, it seemed pretty slow, and instead of just
+hoping it had that shape, I decided to disassemble the drone
+Intcode program directly and see how it was determining points.
+
+First I wrote a [disassembly
+procedure](https://github.com/dhconnelly/advent-of-code-2019/blob/master/intcode/disasm.go)
+and small [tool that wraps
+it](https://github.com/dhconnelly/advent-of-code-2019/blob/master/intcode/cmd/intdisasm/main.go),
+producing a [readable raw
+program](https://raw.githubusercontent.com/dhconnelly/advent-of-code-2019/master/day19/asm_raw.txt).
+I also logged machine instructions as they were being executed,
+producing a program [execution
+dump](https://raw.githubusercontent.com/dhconnelly/advent-of-code-2019/master/day19/dump.txt).
+
+By looking for repeated program counters and then repeated
+sequences of instructions in the dump and matching them up to the
+raw instructions in the disassembled program, I was able to
+separate the program into three sections: (1) the main program,
+(2) a data section, and (3) some procedures. Comparing the
+procedures, I was able to find a calling convention for the
+machine:
+
+From address i0, before calling a function whose instructions
+start at memory address i1 and which should return to address i2:
+
+1. Push i2 onto the stack (i.e. write it to rel(0))
+2. Push the arguments arg0..argN onto the stack (i.e. write them
+   to rel(1)..rel(N+1)
+3. Jump to i1
+
+The called function will:
+
+1. Increment rel by #args+#locals=M
+2. Do work, accessing args at rel-M+1..rel-#locals-1 and locals
+   at rel-#locals..rel-1
+3. Store the return value at rel-1
+3. Decrement rel by M
+4. Jump to rel(0)=i2
+
+Execution will then resume at address i2, and the return value
+from the function will be at rel(1).
+
+Using this and walking through the raw assembly and the execution
+dump, I produced an [annotated
+program](https://raw.githubusercontent.com/dhconnelly/advent-of-code-2019/master/day19/asm.txt)
+to figure out what was going on.
+
+In the end, the value of an x,y input pair is given by
+[determining](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day19/asm.txt#L115)
+whether it satisfies the equation `|149x^2 - 127y^2| < 14xy`. I
+stuck this in
+[desmos.com/calculator](https://www.desmos.com/calculator/p6gk55drwm)
+to find a candidate range. Turns out the beam really is what it
+looked like in that initial 50x50 space:
+
+<iframe src="https://www.desmos.com/calculator/p6gk55drwm?embed"
+width="500px" height="500px" style="border: 1px solid #ccc"
+frameborder=0></iframe>
+
+So I implemented the equation in Go to be able to run it faster
+and then iterated over the candidate space:
+
+```
+func fastTest(x, y int) bool {
+  return 14*x*y > ints.Abs(149*x*x-127*y*y)
+}
+
+func testRange(x, y, width, height int) bool {
+  return (fastTest(x, y) &&
+    fastTest(x+width-1, y) &&
+    fastTest(x, y+height-1) &&
+    fastTest(x+width-1, y+height-1))
+}
+```
+
+This works :) Full code is
+[here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day19/day19.go)
+and the annotated Intcode assembly is
+[here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day19/asm.txt).
