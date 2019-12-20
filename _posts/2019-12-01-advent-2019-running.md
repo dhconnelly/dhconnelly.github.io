@@ -18,7 +18,8 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 [[Day 10]](#day-10) [[Day 11]](#day-11) [[Day 12]](#day-12)
 [[Day 13]](#day-13) [[Day 14]](#day-14) [[Day 15]](#day-15)
 [[Day 16]](#day-16) [[Day 17]](#day-17) [[Day 18]](#day-18)
-[[Day 19]](#day-19)
+[[Day 19]](#day-19) [[intcode reverse
+engineering]](#intcode-reverse-engineering)
 
 ## Day 1
 
@@ -3182,6 +3183,8 @@ apparent starting point -- but then, after mapping it for a
 larger search space, it seemed pretty slow, and instead of just
 hoping it had that shape, I decided to disassemble the drone
 Intcode program directly and see how it was determining points.
+
+### Intcode reverse engineering
 
 First I wrote a [disassembly
 procedure](https://github.com/dhconnelly/advent-of-code-2019/blob/master/intcode/disasm.go)
