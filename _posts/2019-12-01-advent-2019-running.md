@@ -3129,6 +3129,28 @@ literally like five lines of code to memoize my recursive algorithm by
 reducing the amount of state I was tracking, but I'll finish part 2 before
 writing this up with all my attempts.
 
+**Edit** *(21 Dec)*: Finally finished this one! I ended up
+tossing the precomputed adjacency list-based graph
+representation in favor of just re-doing the BFS from each
+point every time, and the result is... extremely slow! But it
+works for both parts and eliminated some complexity around how
+I was keeping track of positions. I could bring it back and
+drastically speed up the program by not modifying the graph
+when keys/doors are removed and instead just skipping them when
+finding neighbors, but I'm honestly tired of working on it and
+would prefer to learn the lessons involved and move on :)
+
+In the end this is just DFS from each current position (just
+the one position for part 1, then the four positions in part
+2), where the neighbors and distances are found using BFS, and
+we use memoization on the DFS recursion (where the state is
+just the position vector and remaining keys) to avoid
+re-exploring previous paths.
+
+I don't feel like annotating the code this time, so I'll just
+link to the source:
+[GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day18/day18.go)
+
 
 ## Day 19
 
