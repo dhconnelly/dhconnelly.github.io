@@ -20,7 +20,7 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 [[Day 16]](#day-16) [[Day 17]](#day-17) [[Day 18]](#day-18)
 [[Day 19]](#day-19) [[intcode reverse
 engineering]](#intcode-reverse-engineering)
-[[Day 20]](#day-20)
+[[Day 20]](#day-20) [[Day 21]](#day-21)
 
 ## Day 1
 
@@ -3448,3 +3448,62 @@ fmt.Println(shortestPath(m, lbl("AA"), lbl("ZZ"), depthEq)) // part 2
 
 That's it! Full code is
 [here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day20/day20.go).
+
+
+## Day 21
+
+I thought this one was pretty easy. The code to run the Intcode machine is
+uninteresting, so I'll skip it. It's on
+[GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day21/day21.go)
+anyway.
+
+The interesting part is the two Springscript programs for parts 1 and 2.
+For part 1, we always jump when there's a hole in front of us:
+
+```
+NOT A J
+```
+
+That's not always fast enough, though, so we need to look
+ahead. Looking four places ahead isn't good, though, because we
+can't make a decision based on that alone: we don't know if
+there's a safe spot to move to (either by walking or jumping)
+afterwards. So we wait an extra step and decide to jump if
+there's a hole at C and a spot to land on at D:
+
+```
+// snip
+NOT C T
+AND D T
+OR T J
+WALK
+```
+
+I didn't think much harder than that about it, and it worked
+for my input. For part 2, we jump if there's a hole at A or B
+or C:
+
+```
+NOT C T
+NOT B J
+OR T J
+NOT A T
+OR T J
+```
+
+But we also only want to jump if there's a space to land on at
+D and a safe spot to move from there, i.e. at E by stepping or
+H by jumping again:
+
+```
+// snip
+OR E T
+OR H T
+AND D T
+AND T J
+RUN
+```
+
+That works! Scripts, input and output files, and the Go code to
+run it are
+[here](https://github.com/dhconnelly/advent-of-code-2019/tree/master/day21).
