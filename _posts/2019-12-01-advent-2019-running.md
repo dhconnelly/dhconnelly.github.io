@@ -20,7 +20,8 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 [[Day 16]](#day-16) [[Day 17]](#day-17) [[Day 18]](#day-18)
 [[Day 19]](#day-19) [[intcode reverse
 engineering]](#intcode-reverse-engineering)
-[[Day 20]](#day-20) [[Day 21]](#day-21)
+[[Day 20]](#day-20) [[Day 21]](#day-21) [[Day 22]](#day-22)
+[[Day 23]](#day-23)
 
 ## Day 1
 
@@ -3529,3 +3530,103 @@ RUN
 That works! Scripts, input and output files, and the Go code to
 run it are
 [here](https://github.com/dhconnelly/advent-of-code-2019/tree/master/day21).
+
+
+## Day 22
+
+I still haven't gotten part 2 for this one. I think I'm on the
+right track, but I'm not there yet. Here's what I have so far.
+
+I started by framing the problem as trying to come up with an
+equation for the value at each index of the deck after each
+transformation. After a while it became clear that it was
+actually easier to figure out which index a specific value is
+moved to, and this was enough to solve part 1. The input was
+then just represented as a sequence of transformations in
+modular arithmetic that could be applied to any number:
+
+```
+redeal(x, n) = -x - 1 (mod n)
+cut(x, with, n) = x - with (mod n)
+deal(x, with, n) = x * with (mod n)
+```
+
+This means each operation can be represented by two values,
+`scale` and `shift`, so that `f(x, n) = scale * x + shift (mod
+n)`.
+
+For part 2, I started by figuring out how to invert this
+sequence, which wasn't actually hard conceptually, since
+
+```
+scale * x + shift = y (mod n) 
+scale * x = y - shift (mod n)
+x = scale^-1 * (y - shift) (mod n)
+```
+
+means that, for any operation `f` represented by `scale` and
+`shift`, `f^-1(x, n) = scale^-1 * (x - shift) (mod n)`. The only
+difficulty here is finding `scale^-1`. I found some algorithms
+online for finding modular inverses, then discovered that the Go
+standard library includes an arbitrary-precision number library,
+`math/big`, which has a built-in
+[`ModInverse`](https://golang.org/pkg/math/big/#Int.ModInverse)
+function! This made it easier to implement inversion.
+
+This framing also makes it possible to read the entire input
+sequence into a single operation, since we can combine two
+operations:
+
+```
+let f(x, n) = scale1 * x + shift1 (mod n)
+let g(x, n) = scale2 * x + shift2 (mod n)
+then (g.f)(x, n) = scale2 * (scale1 * x + shift1) + shift2 (mod n)
+    = (scale2*scale1) * x + (scale2*shift1 + shift2) (mod n)
+```
+
+Which is also representable independently of x using just two
+parameters `scale` and `shift`.
+
+Okay, so this made it possible in testing to compute the initial
+value from the answer to part 1 and apply/invert the input
+transformation in a single step. Trying to use this for part 2,
+though, when applying it 101741582076661 is required, is still
+way too slow.
+
+I suspect the clever solution has something to do with prime
+numbers and properties of modular arithmetic with a prime
+modulus, but I've not got it yet.
+
+The full code so far is on
+[GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day22/day22.go).
+I'm tired of looking at it and won't walk through it, but I will
+come back and update here if I figure out part 2 (or end up
+looking for a hint on Reddit).
+
+## Day 23
+
+This one was fun. Well, part 1 was fun, and then I spent several hours trying
+to figure out why it seemed like my network was stalling.
+
+I think I overused channels and goroutines on this one, which
+too frequenty spun doing nothing and consumed a lot of CPU
+cycles that should have been used for the actually-computing
+Intcode machines. On top of that, I didn't figure out a good way
+to use channels to coordinate the idleness tracking, and ended
+up using a shared map wrapped in a mutex. All of this meant that
+I think there was way too much lock contention, goroutines
+consuming cycles needlessly, and general coordination overhead
+for what could have been a bunch of for-loops.
+
+As it is, my solution only seems to reach a solution with a
+specific combination of GOMAXPROCs, idleness-threshold-value,
+and idleness-check-delay. Not great! But I did eventually get
+the program to terminate with the right answer.
+
+Again not feeling up to documenting this one, because I spent
+way too long with it and am getting a bit burnt out. Frankly, at
+this point, I really would rewrite it to use a bunch of
+for-loops and shared block state.
+
+Code is
+[here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day23/day23.go).
