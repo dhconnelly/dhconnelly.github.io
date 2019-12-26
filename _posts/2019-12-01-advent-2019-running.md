@@ -21,7 +21,7 @@ available on [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 [[Day 19]](#day-19) [[intcode reverse
 engineering]](#intcode-reverse-engineering)
 [[Day 20]](#day-20) [[Day 21]](#day-21) [[Day 22]](#day-22)
-[[Day 23]](#day-23)
+[[Day 23]](#day-23) [[Day 24]](#day-24) [[Day 25]](#day-25)
 
 ## Day 1
 
@@ -3603,6 +3603,43 @@ I'm tired of looking at it and won't walk through it, but I will
 come back and update here if I figure out part 2 (or end up
 looking for a hint on Reddit).
 
+**Edit**: Okay, I finally came back after finishing [Day 25 part
+1](#day-25) to finish up part 2, since the second star on Day 25
+is just a completion trophy. It was much less challenging this
+time.
+
+My major problem was figuring out how to precompute the net
+transformation to be applied after N iterations, where N is
+enormous, without going through it step-by-step. I had something
+like the following:
+
+```
+M^1 [1, 0] = [scale, shift] = 1 time
+M^2 [1, 0] = M*[...] = [scale^2, scale*shift + shift]
+M^3 [1, 0] = M*[...] = [scale^3, scale^2*shift + scale*shift + shift]
+```
+
+For the `scale` parameter this was easy, since after N
+transformations, it's just `scale^N`. A closed formula for
+`shift` seemed more difficult, since it didn't seem easy to
+precompute this sum. But it turns out that typing "sum of powers
+mod prime" produced a few Stack Exchange links that mentioned
+[Geometric
+Sums](https://en.wikipedia.org/wiki/Geometric_series#Formula),
+which I'd totally forgotten about, but which is exactly that
+`shift` polynomial above! I tried to implement this and was still
+having trouble, and an hour of debugging later I realized that
+the [`DivMod`](https://golang.org/pkg/math/big/#Int.DivMod)
+method I was using doesn't do the division I wanted for computing
+the closed Geometric Series formula `(1-r^n)/(1-r)`! I actually
+needed to use
+[`ModInverse`](https://golang.org/pkg/math/big/#Int.ModInverse)
+on the denominator and multiply it by the numerator. I simply
+didn't read the documentation for `DivMod` :(
+
+This fix made it work! Finally.
+
+
 ## Day 23
 
 This one was fun. Well, part 1 was fun, and then I spent several hours trying
@@ -3630,3 +3667,273 @@ for-loops and shared block state.
 
 Code is
 [here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day23/day23.go).
+
+
+## Day 24
+
+Nice Conway's Game of Life-style problem today. For part 1 I
+decided to use bit vectors to represent the board, since (a) the
+biodiversity ranking would then just be the integer value of the
+bit vector when stored row-wise starting at the lowermost bit,
+and (b) keeping track of every layout every seen in order to find
+the first repeat would be much faster (comparisons are a machine
+instruction, integer compare) and the hashmap of previous layouts
+much smaller.
+
+So I wrote a small custom bitset implementation:
+
+```
+type bitset int64
+
+func (b bitset) get(i int) bool {
+  return (b & (1 << i)) > 0
+}
+
+func (b *bitset) set(i int, value bool) {
+  if value {
+    (*b) |= 1 << i
+  } else {
+    (*b) &= ^(1 << i)
+  }
+}
+```
+
+This backs a `layout` struct that tracks the current infestation
+state:
+
+```
+type layout struct {
+  bits   bitset
+  width  int
+  height int
+}
+
+func (l *layout) alive(row, col int) bool {
+  return l.bits.get(row*l.width + col)
+}
+```
+
+Getting the neighboring bug counts is pretty straightforward,
+just checking each direction (if not at an edge):
+
+```
+func (l *layout) adjacent(row, col int) int {
+  adj := 0
+  if row > 0 && l.alive(row-1, col) {
+    adj++
+  }
+  if row < l.height-1 && l.alive(row+1, col) {
+    adj++
+  }
+  if col > 0 && l.alive(row, col-1) {
+    adj++
+  }
+  if col < l.width-1 && l.alive(row, col+1) {
+    adj++
+  }
+  return adj
+}
+```
+
+Then updating the state from one minute to the next is just
+applying the given rules:
+
+```
+func (l *layout) next() {
+  next := l.bits
+  for row := 0; row < l.height; row++ {
+    for col := 0; col < l.width; col++ {
+      adj := l.adjacent(row, col)
+      n := row*l.width + col
+      if l.bits.get(n) && adj != 1 {
+        next.set(n, false)
+      } else if !l.bits.get(n) && (adj == 1 || adj == 2) {
+        next.set(n, true)
+      }
+    }
+  }
+  l.bits = next
+}
+```
+
+To find a repeat we just call `next()` repeatedly and store the
+intermediate states in a `map`:
+
+```
+func findRepeat(l layout) bitset {
+  m := map[bitset]bool{l.bits: true}
+  for {
+    l.next()
+    if _, ok := m[l.bits]; ok {
+      return l.bits
+    }
+    m[l.bits] = true
+  }
+}
+```
+
+Going to part 2 I abandoned this, since the board needs to "grow"
+in two directions, up and down. I decided on a representation
+similar to that from [day 20](#day-20), where each point in space
+is paired with a depth:
+
+```
+type tile struct {
+  p     geom.Pt2
+  depth int
+}
+```
+
+Then we keep these tiles in a `map[tile]bool` indicating whether
+the given tile has a bug. This makes it easy to count the number
+of active bugs at any given time.
+
+```
+type grid struct {
+  width, height int
+  g             map[tile]bool
+}
+
+func (g grid) countBugs() int {
+  bugs := 0
+  for _, alive := range g.g {
+    if alive {
+      bugs++
+    }
+  }
+  return bugs
+}
+```
+
+Iterating the current state is similar to the bit vector approach
+above, but here we do two iterations through the current state,
+so that while considering currently-live bugs we can expand the
+set of tiles in the "universe" to include the neighboring "dead"
+tiles that may come to life in this epoch:
+
+```
+
+func (g grid) adjacentBugs(t tile) int {
+  bugs := 0
+  for _, nbr := range g.adjacent(t) {
+    alive, ok := g.g[nbr]
+    if !ok {
+      g.g[nbr] = false
+    }
+    if alive {
+      bugs++
+    }
+  }
+  return bugs
+}
+func (g grid) next() {
+  diff := make(map[tile]bool)
+
+  // iterate twice so that we can extend the grid to include
+  // consideration of neighboring empty tiles
+  for tile, alive := range g.g {
+    if alive && g.adjacentBugs(tile) != 1 {
+      diff[tile] = false
+    }
+  }
+  for tile, alive := range g.g {
+    adj := g.adjacentBugs(tile)
+    if !alive && (adj == 1 || adj == 2) {
+      diff[tile] = true
+    }
+  }
+
+  // apply diffs
+  for tile, alive := range diff {
+    g.g[tile] = alive
+  }
+}
+```
+
+Most of the complexity here is in the `adjacentBugs` method,
+which calls the `adjacent` method to find the adjacent tile set.
+I'll omit most of `adjacent` since I didn't take the time to
+simplify the code and there's a lot of repetition. The basic idea
+is that, on the edges of the grid, the neighbors across the edge
+are those of the relevant grid above/below the current one. This
+is easy by just incrementing/decrementing the `depth` field of
+`tile`.
+
+```
+func (g grid) adjacentBugs(t tile) int {
+  bugs := 0
+  for _, nbr := range g.adjacent(t) {
+    alive, ok := g.g[nbr]
+    if !ok {
+      g.g[nbr] = false
+    }
+    if alive {
+      bugs++
+    }
+  }
+  return bugs
+}
+
+func (g grid) adjacent(t tile) []tile {
+  var adj []tile
+
+  // left
+  if t.p.X > 0 && (t.p.X != 3 || t.p.Y != 2) {
+    q := t.p.Go(geom.Left)
+    adj = append(adj, tile{p: q, depth: t.depth})
+  } else if t.p.X == 0 {
+    q := geom.Pt2{1, 2}
+    adj = append(adj, tile{p: q, depth: t.depth - 1})
+  } else if t.p.X == 3 && t.p.Y == 2 {
+    for y := 0; y < g.height; y++ {
+      q := geom.Pt2{g.width - 1, y}
+      adj = append(adj, tile{p: q, depth: t.depth + 1})
+    }
+  }
+
+  // snip
+
+  return adj
+}
+```
+
+So now we just call `next` 200 times and call `countBugs`. Nice
+and fun for Christmas Eve :)
+
+Code is
+[here](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day24/day24.go).
+
+
+## Day 25
+
+Today's problem was just part 1; part 2 was "did you finish all
+the other days?" I'd not finished Day 22 part 2 yet, so after
+rescuing Santa I had to go back and do that. Didn't take me long
+this time, after a few days' rest; I edited [the entry](#day-22)
+above.
+
+For the text adventure it's not really worth including the code
+here, since it's a pretty trivial wrapper around the Intcode
+machine. It can be found on
+[GitHub](https://github.com/dhconnelly/advent-of-code-2019/blob/master/day25/day25.go)
+and it's pretty fun to play!
+
+I beat this manually, like I suspect most people did, since it
+was (a) fun and (b) would have been nontrivial to parse compared
+with seemingly-low payoff. It took maybe an hour on-and-off to
+explore the entire ship and get through the security door. The
+door itself was of course the most challenging bit, and I just
+did it essentially brute-force with case elimination on paper and
+repeated trials.
+
+That's the end of this blog post. It's huge at this point, and I
+considered several times splitting it into smaller ones or
+per-post entries, but I think I prefer it like this. I'll be
+writing a retrospective in the coming week and will link to it
+here when it's done. For now I'll just say that this was, by a
+huge margin, the most fun I've ever had programming.
+
+All the code for all the days is on my
+[GitHub](https://github.com/dhconnelly/advent-of-code-2019).
+
+Merry Christmas and Happy New Year!
