@@ -3937,3 +3937,5 @@ All the code for all the days is on my
 [GitHub](https://github.com/dhconnelly/advent-of-code-2019).
 
 Merry Christmas and Happy New Year!
+
+**Edit**: Retrospective is [here](/advent-of-code-2019-retrospective.html)
