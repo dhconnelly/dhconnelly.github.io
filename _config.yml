@@ -2,6 +2,7 @@ name: "Daniel Connelly"
 permalink: :title
 exclude: [README.md, LICENSE, Makefile]
 baseurl: ''
+remote_theme: riggraz/no-style-please
 
 # Information for the Atom feed
 dhconnelly:
