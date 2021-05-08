@@ -1,10 +1,10 @@
-name: "Daniel Connelly"
+author: "Daniel Connelly"
+email: "dhconnelly@gmail.com"
+
 permalink: :title
 exclude: [README.md, LICENSE, Makefile]
 baseurl: ''
-remote_theme: riggraz/no-style-please
 
-# Information for the Atom feed
-dhconnelly:
-   author: "Daniel Connelly"
-   email: "dhconnelly@gmail.com"
+remote_theme: riggraz/no-style-please
+theme_config:
+  appearance: "light"
