@@ -3,10 +3,10 @@ email: "dhconnelly@gmail.com"
 
 permalink: :title
 exclude: [README.md, LICENSE, Makefile]
-baseurl: ''
+baseurl: ""
 
 remote_theme: riggraz/no-style-please
 theme_config:
-  appearance: "light"
-  date_format: "%Y-%m-%d"
-  back_home_text: "[home]"
+    appearance: "light"
+    date_format: "%Y-%m-%d"
+    back_home_text: "[home]"
