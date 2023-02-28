@@ -176,8 +176,68 @@ Use `check_estimator` to make sure you respect the sklearn API!
 
 ## Select a model and train it
 
+**Note**:
+
+-   If the data is huge, sample smaller training sets. This will penalize complex models though!
+-   Automate!!
+
+Steps:
+
+1. Train many quick-and-dirty models from different categories (e.g. linear, naive Bayes, SVM, random forest, neural net, etc) using standard parameters
+2. Measure and compare their performance
+    - Use N-fold cross-validation and compute mean/stdev of perf measure on the folds
+    - `cross_val_score(model, X, Y, scoring="neg_root_mean_squared_error", cv=10)` uses 10 subsets (folds), trains w/ 9 and cross-validates with 1, and does this 10 times
+3. Analyze the most significant variables of each algorithm
+4. Analyze the types of errors the models could make
+    - What data would a human have used to avoid these errors?
+    - Consider specific slices of validation sets for relevant subgroups (e.g. disadvantaged groups, specific metros, etc)
+5. Quick round of feature selection and engineering
+    - Which attributes have the highest weights/importances
+    - `feature_importances_` for trees
+    - Maybe remove some, add new ones, etc
+6. Repeat the above one or two more times - quickly
+7. Shortlist the top three to five promising models, preferring models that make different types of errors
+
 ## Fine-tune your model
+
+Use as much data as possible - and automate!
+
+1. Fine-tune the hyperparameters using cross-validation
+    - Treat data transformation choices as hyperparameters (e.g. impute with zero or median, or drop, etc)
+    - Prefer `RandomSearchCV` over `GridSearchCV` unless there are very few options to test. Consider Bayesian optimization instead if it takes very long
+2. Try ensemble methods - combining best models can produce better results
+3. Pick best model
+    - `best_estimator_` from `XSearchCV`
+4. Estimate generalization error by measuring performance on the test set
+    - This will likely be worse than your cross-validation error, since you fine-tuned to the training set
+    - Don't go tweak hyperparameters to make this number look good - it won't generalize, you'll overfit the test set!
 
 ## Present your solution
 
+1. Document what you have done
+2. Create a nice presentation - highlight the big picture first
+3. Explain why your solution achieves the business objective
+4. Present interesting points noticed along the way
+    - What worked and what didn't?
+    - List your assumptions and your system's limitations
+5. Ensure the key findings are communicated through beautiful visualizations and easy-to-remember statements (e.g. "the median income is the #1 predictor of housing prices")
+
 ## Launch, monitor, and maintain your system
+
+1. Get your solution ready for production
+    - Save the best model: `joblib.dump`
+    - How to use it in production?
+        1. Load it in your app with `joblib.load` and make predictions in your app
+        2. Split the loading and predictions into a prediction service/API
+        3. Upload to Cloud options (e.g. Google Vertex AI) that you call via API
+    - Plug into production data inputs, write unit tests, etc
+2. Write monitoring code to check the system's live performance at regular intervals and trigger alerts when it drops:
+    - Can monitor via downstream metrics (e.g. product sales)
+    - May require a human eval pipeline / **human raters** (crowdsourcing) to monitor performance directly
+    - _Also monitor the input data quality!_ E.g. a sensor sending bad/random values, an input dependency data becoming stale, mean/stdev drifts too far from training set, more missing values than expected, new categorical values, etc. Particularly important for online learning systems!
+    - Beware of slow degradation - models tend to "rot" as data evolves
+3. Retrain the models on a regular basis on fresh data - AUTOMATE!
+    - Schedule collecting fresh data and label it (e.g. w/human raters again)
+    - Schedule re-train: load fresh data, train model, fine-tune hyperparameters
+    - Schedule conditional deployment: compare live model performance with new model, deploy if not worse. If worse, alert and investigate why!
+    - **Keep backups of every model and every dataset version and support easy rollbacks!**
