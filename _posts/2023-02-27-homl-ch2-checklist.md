@@ -33,6 +33,20 @@ Notes from Chapter 2 and Appendix A of [Hands-On Machine Learning with Scikit-Le
     -   Interpretability vs. accuracy?
 5.  How should performance be measured?
     -   RMSE generally preferred for regression
+    -   Classification:
+        -   Accuracy is common, but not great for skewed datasets
+        -   Look at the **confusion matrix**: true pos, true neg, false pos, false neg
+        -   Precision and recall
+            -   Precision (accuracy of positive predictions): TP / (TP + FP)
+            -   Recall (how many positives were predicted): TP / (TP + FN)
+            -   F1 score (harmonic mean of precision and recall): (P x R)/(P + R)
+            -   Should choose this based on the domain and business needs! Sometimes precision is more important than recall, etc.
+            -   And there's a tradeoff: optimizing for higher precision means lowering recall, etc. Choose a decision threshold by plotting P and R vs. threshold and making a business decision. "Let's do 99% precision." => "At what recall?"
+        -   ROC plots true pos vs. false pos. Compare classifiers with AOC (area under ROC curve)
+        -   When to use which?
+            -   Accuracy if data is balanced and you care about both pos and neg predictions
+            -   Precision/recall curve when positives are rare (or you care more about FP than FN)
+            -   ROC curve and AUC otherwise
 6.  Is the performance measure aligned with the business objective?
 7.  What would be the minimum performance needed to reach the business objective?
 8.  What are comparable problems? Can you reuse experience or tools?
@@ -188,8 +202,9 @@ Steps:
     - Use N-fold cross-validation and compute mean/stdev of perf measure on the folds
     - `cross_val_score(model, X, Y, scoring="neg_root_mean_squared_error", cv=10)` uses 10 subsets (folds), trains w/ 9 and cross-validates with 1, and does this 10 times
 3. Analyze the most significant variables of each algorithm
-4. Analyze the types of errors the models could make
+4. Analyze the types of errors the models could make/does make
     - What data would a human have used to avoid these errors?
+    - Do we need to gather more training data? Do **data augmentation**?
     - Consider specific slices of validation sets for relevant subgroups (e.g. disadvantaged groups, specific metros, etc)
 5. Quick round of feature selection and engineering
     - Which attributes have the highest weights/importances
@@ -207,7 +222,8 @@ Use as much data as possible - and automate!
     - Prefer `RandomSearchCV` over `GridSearchCV` unless there are very few options to test. Consider Bayesian optimization instead if it takes very long
 2. Try ensemble methods - combining best models can produce better results
 3. Pick best model
-    - `best_estimator_` from `XSearchCV`
+    - compare cross-validation scores
+    - get tuned model and score via `best_estimator_` and `best_score_` from `XSearchCV`
 4. Estimate generalization error by measuring performance on the test set
     - This will likely be worse than your cross-validation error, since you fine-tuned to the training set
     - Don't go tweak hyperparameters to make this number look good - it won't generalize, you'll overfit the test set!
