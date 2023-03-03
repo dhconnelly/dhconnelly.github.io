@@ -146,15 +146,18 @@ Steps:
     - Drop attributes with no useful information for the task
 3. Feature engineering
     - Bucket/discretize continuous features
-        - `cut`
+        - e.g. `cut`, `KBinsDiscretizer`
         - if multimodal, treat cut bucket as categorical. e.g. home age -> generation bucket (not comparable w.r.t. home value) -> generation as cat attribute
         - another option: RBF (`rbf_kernel(data, compare_to, gamma=)`) can compare data to a specific set of fixed values (e.g. metro areas, generation medians, etc) and return the "distance" to those fixed points
     - Decompose features (e.g. categorical via **one-hot encoding**, date/time, etc)
+        - `df.apply` with custom functions
         - `OneHotEncoder` will remember the categories it was trained on - useful for prod (rather than `df.get_dummies`)
         - Large number of categories for an attribute -> can slow down training and prediction. Maybe replace the attribute with a useful numerical feature?
         - Options: split it up into other data (country code -> gdp, population, etc?), `category_encoders` from sklearn-contrib, or an **embedding** in a neural network. This is **representation learning**
     - Add promising transformations of features (based on ["explore the data"](#explore-and-visualize-the-data-to-gain-insights)), e.g. log, sqrt, polynomial, inverse, etc
     - Aggregate features into new features (feature crosses)
+        - `PolynomialFeatures`
+        - custom transformations
     - Feature scaling: ML algorithms don't perform well when the input numerical attributes have very different scales. _Only fit to the training data!!_
         - Normalization: min/max scaling. `MinMaxScaler`
         - Standardization: (val-mean)/stdev, i.e. value -> # of stdevs away from the mean. `StandardScaler`
@@ -201,15 +204,18 @@ Steps:
 2. Measure and compare their performance
     - Use N-fold cross-validation and compute mean/stdev of perf measure on the folds
     - `cross_val_score(model, X, Y, scoring="neg_root_mean_squared_error", cv=10)` uses 10 subsets (folds), trains w/ 9 and cross-validates with 1, and does this 10 times
+    - `DecisionCurveDisplay`, `PrecisionRecallCurveDisplay`, `RocCurveDisplay`
 3. Analyze the most significant variables of each algorithm
+    - **hyperparameters**: scorers, learners, regularization, cross-validation folds, etc
 4. Analyze the types of errors the models could make/does make
     - What data would a human have used to avoid these errors?
     - Do we need to gather more training data? Do **data augmentation**?
     - Consider specific slices of validation sets for relevant subgroups (e.g. disadvantaged groups, specific metros, etc)
 5. Quick round of feature selection and engineering
     - Which attributes have the highest weights/importances
+    - `df.corr` and `scatter_matrix`
     - `feature_importances_` for trees
-    - Maybe remove some, add new ones, etc
+    - Maybe remove some, add new ones, etc. e.g. `feature_selection`
 6. Repeat the above one or two more times - quickly
 7. Shortlist the top three to five promising models, preferring models that make different types of errors
 
@@ -225,8 +231,11 @@ Use as much data as possible - and automate!
     - compare cross-validation scores
     - get tuned model and score via `best_estimator_` and `best_score_` from `XSearchCV`
 4. Estimate generalization error by measuring performance on the test set
+    - `metrics.accuracy_score`, `mean_squared_error(squared=False)`
     - This will likely be worse than your cross-validation error, since you fine-tuned to the training set
     - Don't go tweak hyperparameters to make this number look good - it won't generalize, you'll overfit the test set!
+        - go back to the beginning, create a new test set, reevaluate all your decisions, build new models
+        - do this too many times splitting train/test from the same dataset => still overfitting, since with enough splits you'll eventually "see" all the data
 
 ## Present your solution
 
