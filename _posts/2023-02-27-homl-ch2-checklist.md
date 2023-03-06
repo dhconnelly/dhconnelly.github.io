@@ -5,8 +5,8 @@ date: 2023-02-27
 permalink: /ml-project-checklist.html
 ---
 
-Notes from Chapter 2 and Appendix A of [Hands-On Machine Learning with Scikit-Learn, Keras & TensorFlow](https://www.oreilly.com/library/view/hands-on-machine-learning/9781098125967/) by Aurélion Géron, which cover
-"End-to-End Machine Learning Project" and "Machine Learning Project Checklist"
+Appendix A: "Machine Learning Project Checklist" from the book [Hands-On Machine Learning with Scikit-Learn, Keras & TensorFlow](https://www.oreilly.com/library/view/hands-on-machine-learning/9781098125967/) by Aurélion Géron, annotated
+with details and suggestions from other chapters as well as my own experience. (Caveat: this experience is currently limited to writing notebooks for Kaggle competitions :))
 
 ## Project Checklist
 
